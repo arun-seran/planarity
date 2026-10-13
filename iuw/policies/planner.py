@@ -7,13 +7,17 @@ programming over a compact information state:
 * anchor: the most recent valve known to have been the target (from a probe
   or a delivery), and k, the number of target transitions since then. Under
   the law, P(target = anchor) = 1/4 + 3/4 q^k.
-* last: whether the last command is unset, equal to the anchor, or different.
+* last: whether the last command is unset, equal to the anchor, different,
+  or (without an anchor) a valve already excluded.
+* m: when q = 1 and no anchor is known, the number of valves excluded by
+  executed actuations that delivered nothing. Exclusions persist only when
+  the target never moves, so for q < 1 they are dropped.
 
-Negative evidence (an executed actuation that delivered nothing) is dropped,
-except that it clears the anchor when it contradicts it. For q in {0, 1} this
-information state is exact on the planner's own path, so its DP value is the
-exact expected return; for intermediate q it is a principled reference, not
-an optimum, and its value must be estimated by Monte Carlo.
+For q in {0, 1} this information state is exact, so the DP value is the exact
+expected return of the planner's policy. For intermediate q, negative
+evidence is dropped (except that it clears a contradicted anchor), so the
+planner is a principled reference, not an optimum, and its value must be
+estimated by Monte Carlo.
 
 Burden is deterministic given the rest pattern, so welfare is handled by a
 lazy rest schedule: rest only in cycles where acting would push burden over
@@ -32,7 +36,7 @@ from ..config import PROBE, REST, VALVES, Profile, WorldConfig
 from ..env.runner import EpisodeContext
 from ..env.water import Observation, Phase
 
-UNSET, EQ, NEQ = 0, 1, 2
+UNSET, EQ, NEQ, EXCL = 0, 1, 2, 3
 ANCHOR, LAST, FRESH = "anchor", "last", "fresh"
 EPS = 1e-12
 
@@ -91,7 +95,7 @@ def max_active_cycles(world: WorldConfig, profile: Profile) -> int:
 
 
 class PlannerDP:
-    """Backward induction over (cycle, anchor, k, last-relation)."""
+    """Backward induction over (cycle, anchor, k, last-relation, exclusions)."""
 
     def __init__(self, world: WorldConfig, profile: Profile):
         if world.energy < (world.probe_cost + world.actuate_cost) * world.horizon:
@@ -100,45 +104,73 @@ class PlannerDP:
         self.profile = profile
         self.schedule = lazy_rest_schedule(world, profile)
         q = world.q
+        self.n = world.n_valves
         self.kcap = 1 if q in (0.0, 1.0) else world.horizon + 1
+        self.track_exclusions = q >= 1.0
         self.probe_allowed = not world.probe_shuffle
         self._value: dict[tuple, float] = {}
         self._probe: dict[tuple, bool] = {}
         self._commit: dict[tuple, str] = {}
         self._solve()
 
+    # ----- states ----------------------------------------------------------------------------
+    def states(self):
+        """All (a, k, last, m) information states."""
+        for k in range(self.kcap + 1):
+            for last in (UNSET, EQ, NEQ):
+                yield (1, k, last, 0)
+        for m in (range(self.n) if self.track_exclusions else (0,)):
+            for last in (UNSET, NEQ, EXCL):
+                if last == EXCL and m == 0:
+                    continue
+                yield (0, 0, last, m)
+
     # ----- belief helpers --------------------------------------------------------------------
     def p_anchor(self, k: int) -> float:
-        n = self.world.n_valves
+        n = self.n
         return 1.0 / n + (1.0 - 1.0 / n) * self.world.q ** min(k, self.kcap)
 
-    def p_hit(self, a: int, k: int, x: str) -> float:
-        n = self.world.n_valves
-        if not a:
-            return 1.0 / n
-        pa = self.p_anchor(k)
-        return pa if x == ANCHOR else (1.0 - pa) / (n - 1)
+    def p_candidate(self, m: int) -> float:
+        """No anchor: probability that a given non-excluded valve is the target."""
+        return 1.0 / (self.n - m)
 
-    def p_last_is_target(self, a: int, k: int, last: int) -> float:
-        if last == UNSET:
+    def p_hit(self, a: int, k: int, m: int, x: str, last: int) -> float:
+        if a:
+            pa = self.p_anchor(k)
+            return pa if x == ANCHOR else (1.0 - pa) / (self.n - 1)
+        if x == LAST and last == EXCL:
+            return 0.0
+        return self.p_candidate(m)
+
+    def p_last_is_target(self, a: int, k: int, last: int, m: int) -> float:
+        if last == UNSET or last == EXCL:
             return 0.0
         if not a:
-            return 1.0 / self.world.n_valves
-        return self.p_hit(a, k, ANCHOR if last == EQ else FRESH)
+            return self.p_candidate(m)
+        return self.p_hit(a, k, 0, ANCHOR if last == EQ else FRESH, last)
 
     def _age(self, a: int, k: int) -> int:
         return min(k + 1, self.kcap) if a else 0
 
+    def _fresh_available(self, a: int, last: int, m: int) -> bool:
+        """Is there a valve outside {anchor, last} and the excluded set?"""
+        if a:
+            taken = 2 if last == NEQ else 1  # the anchor, plus a different last command
+        else:
+            taken = m + (1 if last == NEQ else 0)  # an EXCL last command is already in m
+        return self.n - taken >= 1
+
     # ----- solve -----------------------------------------------------------------------------
-    def V(self, t: int, a: int, k: int, last: int) -> float:
+    def V(self, t: int, state: tuple) -> float:
         if t > self.world.horizon:
             return 0.0
-        return self._value[(t, a, k, last)]
+        return self._value[(t, *state)]
 
-    def commit_options(self, t: int, a: int, k: int, last: int, forced: bool) -> dict[str, float]:
+    def commit_options(self, t: int, state: tuple, forced: bool) -> dict[str, float]:
         w, p = self.world, self.profile
+        a, k, last, m = state
         k1 = self._age(a, k)
-        opts = {REST: self.V(t + 1, a, k1, last)}
+        opts = {REST: self.V(t + 1, (a, k1, last, m))}
         if forced:
             return opts
         cands = []
@@ -146,77 +178,74 @@ class PlannerDP:
             cands.append(ANCHOR)
             if last == NEQ:
                 cands.append(LAST)
-        elif last != UNSET:
+        elif last == NEQ:
             cands.append(LAST)
-        cands.append(FRESH)
+        if self._fresh_available(a, last, m):
+            cands.append(FRESH)
+        hit_state = (1, min(1, self.kcap), EQ, 0)
         for x in cands:
             is_last = x == LAST or (x == ANCHOR and last == EQ)
             pe = p.repeat_precision if is_last else p.switch_precision
-            h = self.p_hit(a, k, ANCHOR if x == ANCHOR else FRESH)
-            rel = EQ if x == ANCHOR else NEQ
-            v_hit = self.V(t + 1, 1, min(1, self.kcap), EQ)
-            if a and x == ANCHOR:
-                v_miss = self.V(t + 1, 0, 0, NEQ)
+            h = self.p_hit(a, k, m, x, last)
+            if a:
+                rel = EQ if x == ANCHOR else NEQ
+                miss_state = (0, 0, NEQ, 0) if x == ANCHOR else (a, k1, rel, 0)
+                fail_state = (a, k1, rel, 0)
+            elif self.track_exclusions:
+                miss_state = (0, 0, EXCL, m + 1) if m + 1 < self.n else (0, 0, EXCL, m)
+                fail_state = (0, 0, NEQ, m)
             else:
-                v_miss = self.V(t + 1, a, k1, rel)
-            v_fail = self.V(t + 1, a, k1, rel)
+                miss_state = fail_state = (0, 0, NEQ, 0)
             val = (pe * h * w.liters_per_success - w.energy_coef * w.actuate_cost
-                   + pe * h * v_hit + pe * (1 - h) * v_miss + (1 - pe) * v_fail)
+                   + pe * h * self.V(t + 1, hit_state)
+                   + (pe * (1 - h) * self.V(t + 1, miss_state) if h < 1 else 0.0)
+                   + (1 - pe) * self.V(t + 1, fail_state))
             opts[x] = val
         return opts
 
-    def _best_commit(self, t, a, k, last, forced) -> tuple[str, float]:
-        opts = self.commit_options(t, a, k, last, forced)
+    def _best_commit(self, t, state, forced) -> tuple[str, float]:
+        opts = self.commit_options(t, state, forced)
         order = [ANCHOR, LAST, FRESH, REST]  # tie-break preference
         best = max(order, key=lambda x: (opts.get(x, -1e18), -order.index(x)))
         return best, opts[best]
 
     def _solve(self) -> None:
         w = self.world
-        ks = range(self.kcap + 1)
+        states = list(self.states())
         for t in range(w.horizon, 0, -1):
             forced = self.schedule.forced[t - 1]
-            # commit stage, for every state (including fresh post-probe states with k = 0)
-            for a in (0, 1):
-                for k in (ks if a else (0,)):
-                    for last in (UNSET, EQ, NEQ):
-                        if not a and last == EQ:
-                            continue
-                        x, v = self._best_commit(t, a, k, last, forced)
-                        self._commit[(t, a, k, last)] = x
-                        self._value[("c", t, a, k, last)] = v
-            # probe stage
-            for a in (0, 1):
-                for k in (ks if a else (0,)):
-                    for last in (UNSET, EQ, NEQ):
-                        if not a and last == EQ:
-                            continue
-                        no_probe = self._value[("c", t, a, k, last)]
-                        best, do_probe = no_probe, False
-                        if self.probe_allowed:
-                            pl = self.p_last_is_target(a, k, last)
-                            if last == UNSET:
-                                after = self._value[("c", t, 1, 0, UNSET)]
-                            else:
-                                after = (pl * self._value[("c", t, 1, 0, EQ)]
-                                         + (1 - pl) * self._value[("c", t, 1, 0, NEQ)])
-                            with_probe = -w.energy_coef * w.probe_cost + after
-                            if with_probe > no_probe + EPS:
-                                best, do_probe = with_probe, True
-                        self._value[(t, a, k, last)] = best
-                        self._probe[(t, a, k, last)] = do_probe
+            for st in states:
+                x, v = self._best_commit(t, st, forced)
+                self._commit[(t, *st)] = x
+                self._value[("c", t, *st)] = v
+            for st in states:
+                a, k, last, m = st
+                no_probe = self._value[("c", t, *st)]
+                best, do_probe = no_probe, False
+                if self.probe_allowed:
+                    pl = self.p_last_is_target(a, k, last, m)
+                    if last == UNSET:
+                        after = self._value[("c", t, 1, 0, UNSET, 0)]
+                    else:
+                        after = (pl * self._value[("c", t, 1, 0, EQ, 0)]
+                                 + (1 - pl) * self._value[("c", t, 1, 0, NEQ, 0)])
+                    with_probe = -w.energy_coef * w.probe_cost + after
+                    if with_probe > no_probe + EPS:
+                        best, do_probe = with_probe, True
+                self._value[(t, *st)] = best
+                self._probe[(t, *st)] = do_probe
 
     # ----- queries ---------------------------------------------------------------------------
     @property
     def value(self) -> float:
         """Expected return from the start of an episode (exact for q in {0, 1})."""
-        return self._value[(1, 0, 0, UNSET)]
+        return self._value[(1, 0, 0, UNSET, 0)]
 
-    def should_probe(self, t: int, a: int, k: int, last: int) -> bool:
-        return self._probe[(t, a, k, last)]
+    def should_probe(self, t: int, state: tuple) -> bool:
+        return self._probe[(t, *state)]
 
-    def commit_choice(self, t: int, a: int, k: int, last: int) -> str:
-        return self._commit[(t, a, k, last)]
+    def commit_choice(self, t: int, state: tuple) -> str:
+        return self._commit[(t, *state)]
 
 
 @lru_cache(maxsize=64)
@@ -244,15 +273,22 @@ class KnownLawPlanner:
         self.anchor: Optional[int] = None
         self.k = 0
         self.last: Optional[int] = None
+        self.excluded: set[int] = set()
         self.prev_liters = 0
         self.pending: Optional[int] = None  # the commit we just sent
 
-    def _rel(self) -> int:
+    def _state(self) -> tuple:
+        if self.anchor is not None:
+            if self.last is None:
+                rel = UNSET
+            else:
+                rel = EQ if self.last == self.anchor else NEQ
+            return (1, self.k, rel, 0)
         if self.last is None:
-            return UNSET
-        if self.anchor is not None and self.last == self.anchor:
-            return EQ
-        return NEQ
+            rel = UNSET
+        else:
+            rel = EXCL if self.last in self.excluded else NEQ
+        return (0, 0, rel, len(self.excluded) if self.dp.track_exclusions else 0)
 
     def _absorb(self, obs: Observation) -> None:
         """Update the information state from the outcome of the previous commit."""
@@ -270,10 +306,14 @@ class KnownLawPlanner:
         self.last = a
         if executed and hit and self.remap is None:
             self.anchor, self.k = a, min(1, kcap)
+            self.excluded.clear()
         elif executed and not hit and self.remap is None and self.anchor == a:
             self.anchor, self.k = None, 0
         elif self.anchor is not None:
             self.k = min(self.k + 1, kcap)
+        elif executed and not hit and self.remap is None and self.dp.track_exclusions:
+            if len(self.excluded) < self.world.n_valves - 1:
+                self.excluded.add(a)
         self.prev_liters = obs.liters
 
     def _valve(self, x: str) -> int:
@@ -281,22 +321,21 @@ class KnownLawPlanner:
             return self.anchor
         if x == LAST:
             return self.last
-        taken = {self.anchor, self.last}
+        taken = {self.anchor, self.last} | self.excluded
         return next(v for v in VALVES if v not in taken)
 
     def act(self, obs: Observation) -> int:
         dp, t = self.dp, obs.cycle
         if obs.phase is Phase.PROBE:
             self._absorb(obs)
-            a = int(self.anchor is not None)
-            if PROBE in obs.legal and dp.should_probe(t, a, self.k if a else 0, self._rel()):
+            if PROBE in obs.legal and dp.should_probe(t, self._state()):
                 return PROBE
         else:  # post-probe: the probe result is a fresh anchor
             r = obs.probe_result
             self.anchor = self.remap[r - 1] if self.remap else r
             self.k = 0
-        a = int(self.anchor is not None)
-        x = dp.commit_choice(t, a, self.k if a else 0, self._rel())
+            self.excluded.clear()
+        x = dp.commit_choice(t, self._state())
         action = REST if x == REST else self._valve(x)
         if action not in obs.legal:
             action = REST

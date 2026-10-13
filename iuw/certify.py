@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from .config import (COUNTERFACTUAL, K_FLOOR, NOISY_COUNTERFACTUAL, NOISY_REFERENCE, PROFILE_A,
-                     PROFILE_B, PROFILES, REFERENCE, Profile, WorldConfig)
+                     PROFILE_B, PROFILES, REFERENCE, WORLDS, Profile, WorldConfig)
 from .env.runner import run_many, summarise_returns
 from .policies.baselines import OraclePolicy, RandomPolicy
 from .policies.planner import KnownLawPlanner, lazy_rest_schedule, max_active_cycles, planner_value
@@ -120,8 +120,7 @@ def witness_gate(fixture: dict[tuple[str, str], Fraction], a_cf: float, b_ref: f
 
 
 def certify(n_episodes: int = 1000, seeds_offset: int = 10_000,
-            worlds: Iterable[WorldConfig] = (REFERENCE, COUNTERFACTUAL, NOISY_REFERENCE,
-                                             NOISY_COUNTERFACTUAL),
+            worlds: Iterable[WorldConfig] = tuple(WORLDS.values()),
             k: float = K_FLOOR) -> dict:
     """Run stages 1-2 and return a JSON-serialisable certificate."""
     fixture = fixture_table()
@@ -159,6 +158,8 @@ def certify(n_episodes: int = 1000, seeds_offset: int = 10_000,
                         b_ref["planner_mc"]["lower95"], b_ref["planner_welfare_violations"], k)
     floors = {}
     for w in worlds:
+        if w.is_control:
+            continue
         floors[w.name] = sorted(p for p in "AB" if cells[f"{w.name}/{p}"]["meets_floor"])
     return {
         "version": "Water-v1",

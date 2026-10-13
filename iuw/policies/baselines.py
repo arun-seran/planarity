@@ -109,6 +109,8 @@ class OraclePolicy:
         if w.burden_decay * obs.burden + w.excess_noise(p) > w.burden_limit:
             return REST  # lazy rest: act whenever welfare allows
         t = self.env.target
+        if w.reward_remap is not None:  # aim for the valve that is credited, not the physical target
+            t = w.reward_remap.permutation[t - 1]
         if t in obs.legal:
             self.active += 1
             return t

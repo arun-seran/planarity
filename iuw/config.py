@@ -98,7 +98,16 @@ COUNTERFACTUAL = WorldConfig("counterfactual", q=1.0, noise=0.0)
 NOISY_REFERENCE = WorldConfig("noisy-reference", q=0.0, noise=2.0)
 NOISY_COUNTERFACTUAL = WorldConfig("noisy-counterfactual", q=1.0, noise=2.0)
 
-WORLDS = {w.name: w for w in (REFERENCE, COUNTERFACTUAL, NOISY_REFERENCE, NOISY_COUNTERFACTUAL)}
+# Controls: explanations other than the claimed mechanism (never primary test worlds).
+SHUFFLE_REFERENCE = WorldConfig("reference-shuffle", q=0.0, noise=0.0, probe_shuffle=True)
+SHUFFLE_COUNTERFACTUAL = WorldConfig("counterfactual-shuffle", q=1.0, noise=0.0, probe_shuffle=True)
+REMAP_REFERENCE = WorldConfig("reference-remap", q=0.0, noise=0.0, reward_remap=RewardRemap())
+REMAP_COUNTERFACTUAL = WorldConfig("counterfactual-remap", q=1.0, noise=0.0, reward_remap=RewardRemap())
+
+PRIMARY_WORLDS = (REFERENCE, COUNTERFACTUAL)
+ABLATION_WORLDS = (NOISY_REFERENCE, NOISY_COUNTERFACTUAL)  # quiet-only = reference; persistence-only = noisy-cf
+CONTROL_WORLDS = (SHUFFLE_REFERENCE, SHUFFLE_COUNTERFACTUAL, REMAP_REFERENCE, REMAP_COUNTERFACTUAL)
+WORLDS = {w.name: w for w in (*PRIMARY_WORLDS, *ABLATION_WORLDS, *CONTROL_WORLDS)}
 WORLD_ALIASES = {"ref": "reference", "cf": "counterfactual", "noisy-ref": "noisy-reference",
                  "noisy-cf": "noisy-counterfactual"}
 

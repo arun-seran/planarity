@@ -109,3 +109,13 @@ def test_scripted_controllers_reproduce_the_plans():
     s = summarise_returns([r.episode_return for r in
                            run_many(REFERENCE, PROFILE_B, range(300), AlwaysProbePolicy())])
     assert abs(s.mean - 65.0) < 4 * s.se
+
+
+@pytest.mark.slow
+def test_planner_dp_matches_monte_carlo_in_control_and_intermediate_worlds():
+    from iuw.config import CONTROL_WORLDS
+    for w in (*CONTROL_WORLDS, world_with_q(0.75)):
+        for p in (PROFILE_A, PROFILE_B):
+            s = summarise_returns([r.episode_return for r in
+                                   run_many(w, p, range(400), KnownLawPlanner(w, PROFILES))])
+            assert abs(s.mean - planner_value(w, p)) < 4 * s.se + 0.05, (w.name, p.name)

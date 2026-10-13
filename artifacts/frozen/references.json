@@ -1,6 +1,34 @@
 {
   "n_episodes": 1000,
   "references": {
+    "counterfactual-remap/A": {
+      "J_oracle": 92.12900000000018,
+      "J_random": 1.5469500000000023,
+      "J_reference": 92.07000000000019,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "counterfactual-remap/B": {
+      "J_oracle": 69.91600000000011,
+      "J_random": 10.210949999999993,
+      "J_reference": 69.95000000000012,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "counterfactual-shuffle/A": {
+      "J_oracle": 92.12900000000018,
+      "J_random": 1.619950000000002,
+      "J_reference": 89.30000000000018,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "counterfactual-shuffle/B": {
+      "J_oracle": 69.91600000000011,
+      "J_random": 10.192949999999993,
+      "J_reference": 68.5000000000001,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
     "counterfactual/A": {
       "J_oracle": 92.12900000000018,
       "J_random": 1.619950000000002,
@@ -16,7 +44,7 @@
       "scored": true
     },
     "noisy-counterfactual/A": {
-      "J_oracle": 6.548999999999999,
+      "J_oracle": 53.10100000000003,
       "J_random": 0.12529999999999994,
       "J_reference": 53.01,
       "J_reference_source": "exact DP",
@@ -30,7 +58,7 @@
       "scored": true
     },
     "noisy-reference/A": {
-      "J_oracle": 1.8830000000000005,
+      "J_oracle": 15.359999999999985,
       "J_random": 0.1072999999999999,
       "J_reference": 12.539999999999985,
       "J_reference_source": "exact DP",
@@ -40,6 +68,34 @@
       "J_oracle": 69.91600000000011,
       "J_random": 10.108949999999991,
       "J_reference": 65.00000000000024,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "reference-remap/A": {
+      "J_oracle": 26.945999999999955,
+      "J_random": 1.5479500000000022,
+      "J_reference": 21.779999999999937,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "reference-remap/B": {
+      "J_oracle": 69.91600000000011,
+      "J_random": 10.177949999999994,
+      "J_reference": 65.00000000000024,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "reference-shuffle/A": {
+      "J_oracle": 26.945999999999955,
+      "J_random": 1.4719500000000019,
+      "J_reference": 19.27999999999997,
+      "J_reference_source": "exact DP",
+      "scored": true
+    },
+    "reference-shuffle/B": {
+      "J_oracle": 69.91600000000011,
+      "J_random": 10.108949999999991,
+      "J_reference": 13.749999999999982,
       "J_reference_source": "exact DP",
       "scored": true
     },
