@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iuw"
+version = "0.3.0"
+description = "Inverted-Utility World: RL environment, certification and training harness (spec v3, Water-v1 MVP)"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+tokenizers = ["transformers>=4.45", "regex"]
+tinker = ["tinker>=0.33", "torch>=2.2"]
+inspect = ["torch>=2.2", "transformers>=4.45", "peft>=0.12", "safetensors"]
+
+[project.scripts]
+iuw = "iuw.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["iuw*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: Monte Carlo checks that take more than a few seconds",
+]
