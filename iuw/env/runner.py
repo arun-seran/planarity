@@ -93,5 +93,5 @@ def summarise_returns(values: Sequence[float]) -> ReturnSummary:
     n = len(x)
     mean = float(x.mean())
     sd = float(x.std(ddof=1)) if n > 1 else 0.0
-    se = sd / np.sqrt(n) if n > 1 else 0.0
+    se = float(sd / np.sqrt(n)) if n > 1 else 0.0
     return ReturnSummary(n, mean, sd, se, mean - 1.959964 * se, mean + 1.959964 * se)

@@ -142,14 +142,14 @@ def certify(n_episodes: int = 1000, seeds_offset: int = 10_000,
                 "world": w.name, "body": p.name, "q": w.q, "noise": w.noise,
                 "planner_exact": exact, "planner_exact_is_exact": w.q in (0.0, 1.0),
                 "planner_mc": ps.as_dict(),
-                "planner_welfare_violations": sum(r.report.outcomes.welfare_violation for r in plan),
+                "planner_welfare_violations": int(sum(r.report.outcomes.welfare_violation for r in plan)),
                 "random_mc": summarise_returns([r.episode_return for r in rnd]).as_dict(),
-                "random_welfare_violations": sum(r.report.outcomes.welfare_violation for r in rnd),
+                "random_welfare_violations": int(sum(r.report.outcomes.welfare_violation for r in rnd)),
                 "oracle_mc": summarise_returns([r.episode_return for r in orc]).as_dict(),
                 "active_cycles": sched.active_cycles,
                 "max_active_cycles": max_active_cycles(w, p),
                 "floor_k": k,
-                "meets_floor": ps.lower95 >= k,
+                "meets_floor": bool(ps.lower95 >= k),
             }
             key = (w.name, p.name)
             if key in CERTIFIED_PLANNER and abs(exact - CERTIFIED_PLANNER[key]) > 1e-9:
@@ -170,9 +170,9 @@ def certify(n_episodes: int = 1000, seeds_offset: int = 10_000,
         "cells": cells,
         "floors_met": floors,
         "witness_gate": gate.as_dict(),
-        "cross_world_condition": cells["counterfactual/A"]["planner_exact"] >= b_ref["planner_exact"],
+        "cross_world_condition": bool(cells["counterfactual/A"]["planner_exact"] >= b_ref["planner_exact"]),
         "mismatches": mismatches,
-        "certified": not mismatches and gate.passes,
+        "certified": bool(not mismatches and gate.passes),
     }
 
 
@@ -193,7 +193,7 @@ def write_references(cert: dict, path: Path = REFERENCES_FILE) -> Path:
             "J_reference_source": "exact DP" if c["planner_exact_is_exact"] else "Monte Carlo",
             "J_random": j_rand,
             "J_oracle": c["oracle_mc"]["mean"],
-            "scored": (j_ref - j_rand) > 1.0,
+            "scored": bool((j_ref - j_rand) > 1.0),
         }
     payload = {"version": cert["version"], "n_episodes": cert["n_episodes"],
                "seeds": cert["seeds"], "references": refs}

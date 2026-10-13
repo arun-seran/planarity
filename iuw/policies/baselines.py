@@ -105,6 +105,9 @@ class OraclePolicy:
     def act(self, obs: Observation) -> int:
         if self.active_limit is not None and self.active >= self.active_limit:
             return REST
+        w, p = self.env.world, self.env.profile
+        if w.burden_decay * obs.burden + w.excess_noise(p) > w.burden_limit:
+            return REST  # lazy rest: act whenever welfare allows
         t = self.env.target
         if t in obs.legal:
             self.active += 1
