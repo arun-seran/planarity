@@ -148,9 +148,13 @@ svg.chart * { vector-effect: non-scaling-stroke; }
 .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Teaser */
-.t-world { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 18px; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
-.t-world-text { font-size: 12px; line-height: 1.55; }
-.t-world-text b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.t-world { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.t-world-head { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.t-worlds { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+.t-world-one { min-width: 0; }
+.t-world-one .name { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.t-world-one .name span { font-weight: 400; color: var(--muted); }
+.t-world-one p { font-size: 11.5px; line-height: 1.5; margin: 6px 0 0; }
 .t-grid { display: grid; grid-template-columns: 104px minmax(0, .9fr) minmax(0, 1.35fr) minmax(0, 1fr); gap: 10px 26px; align-items: center; margin-top: 14px; }
 .t-head { font-size: 11px; color: var(--muted); line-height: 1.35; align-self: end; }
 .t-label { font-size: 12.5px; font-weight: 600; line-height: 1.3; border-left: 3px solid; padding: 6px 0 6px 8px; }
@@ -232,7 +236,7 @@ footer.end a { color: var(--fg); }
   main { margin-top: 48px; }
   .frame { padding: 14px; font-size: 12px; }
   .render { grid-template-columns: 1fr; }
-  .t-world { grid-template-columns: 1fr; }
+  .t-worlds { grid-template-columns: 1fr; gap: 16px; }
   .t-grid { grid-template-columns: 1fr; gap: 8px; }
   .t-head { display: none; }
   .t-label { margin-top: 10px; }
@@ -311,8 +315,19 @@ footer.end a { color: var(--fg); }
         <div class="t-stage"><span>04 / transfer</span><strong>Flip the rule back</strong><p>Test whether the learned behavior works in the changing world too.</p></div>
       </div>
       <div class="t-world">
-        <div class="t-world-text"><b>01 / the stable world used for training</b>The same valve supplies water each cycle. A body that repeats reliably can now outperform a body that switches easily. The changing-world condition provides the comparison.</div>
-        <svg class="chart" id="t-strip" role="img" aria-label="Valve 2 is active in every cycle"></svg>
+        <div class="t-world-head">01 / one canal, two hidden rules</div>
+        <div class="t-worlds">
+          <div class="t-world-one">
+            <div class="name">Stable world <span>· trained here</span></div>
+            <svg class="chart" id="t-strip-stable" role="img" aria-label="Stable world: valve 2 is active in every cycle"></svg>
+            <p>The active valve stays put. A body that repeats reliably comes out ahead.</p>
+          </div>
+          <div class="t-world-one">
+            <div class="name">Changing world <span>· tested in stage 04</span></div>
+            <svg class="chart" id="t-strip-changing" role="img" aria-label="Changing world: the active valve differs from cycle to cycle"></svg>
+            <p>The active valve is redrawn every cycle. A body that switches easily comes out ahead.</p>
+          </div>
+        </div>
       </div>
       <div class="t-grid">
         <div class="t-head"></div>
@@ -633,20 +648,22 @@ footer.end a { color: var(--fg); }
   bars("teaser-named", C.amberMid, C.amberTint, [0.62, 0.19]);
   bars("teaser-masked", C.violetMid, C.violetTint, [0.94, 0.95]);
 
-  /* Teaser: one-world strip and learning sparklines */
-  (function () {
-    var svg = document.getElementById("t-strip");
-    var n = 8, cw = 36, W = n * cw, rowH = 11, top = 12;
+  /* Teaser: the two worlds as miniature valve strips, and learning sparklines */
+  function miniStrip(id, seq) {
+    var svg = document.getElementById(id);
+    var n = seq.length, cw = 36, W = n * cw, rowH = 11, top = 12;
     svg.setAttribute("viewBox", "0 0 " + W + " " + (top + 4 * rowH + 2));
     for (var i = 0; i < n; i++) {
       el("text", { x: i * cw + cw / 2, y: 8, "text-anchor": "middle", "font-size": 8, fill: C.muted }, svg, "c" + (i + 1));
       for (var v = 1; v <= 4; v++) {
-        var on = v === 2;
+        var on = v === seq[i];
         el("rect", { x: i * cw + 5, y: top + (v - 1) * rowH, width: cw - 10, height: rowH - 3,
           fill: on ? C.fg : "#fff", stroke: C.fg, "stroke-width": 1 }, svg);
       }
     }
-  })();
+  }
+  miniStrip("t-strip-stable", [2, 2, 2, 2, 2, 2, 2, 2]);
+  miniStrip("t-strip-changing", [2, 4, 4, 1, 3, 1, 2, 4]);
   function spark(id, color, labelColor, runs, endLabel) {
     var svg = document.getElementById(id);
     var W = 240, H = 78, L = 18, R = 78, T = 6, B = 14;
