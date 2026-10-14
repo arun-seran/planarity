@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>What Would an AI Have to Unlearn in a Different World? · Arun Rajagopal</title>
-<meta name="description" content="An early experiment on the assumptions language models carry into unfamiliar environments: one simulated world, described with familiar words or invented ones.">
+<meta name="description" content="Can an AI recognize when its learned assumptions do not fit a new world? A pilot study of familiar language, adaptation, and transfer across changing rules.">
 <meta property="og:title" content="What Would an AI Have to Unlearn in a Different World?">
-<meta property="og:description" content="One simulated world, two vocabularies. With invented words, the same model learned the world much faster.">
+<meta property="og:description" content="One simulated world, two vocabularies. Why did the model learn faster with invented words, and what would show whether its existing knowledge got in the way?">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://arunrl.com/planarity">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,8 +21,8 @@
   --surface: #f6f5f4;
   --surface-raised: #e3e1de;
   --dot: #d4d4d4;
-  --accent: #0d9488;
-  --accent-hover: #0f766e;
+  --accent: #000;
+  --accent-hover: #787168;
   --amber: #d97706;
   --amber-mid: #f59e0b;
   --amber-tint: #fef3c7;
@@ -63,7 +63,7 @@ code { font-family: var(--mono); font-size: .82em; border: 1px solid var(--line)
 /* Header */
 .crumbs { font-family: var(--sans); font-size: 14px; padding: 28px 0 0; }
 .crumbs a { color: var(--fg); text-decoration: none; }
-.crumbs a:hover { color: var(--accent); }
+.crumbs a:hover { color: var(--accent-hover); }
 header.masthead { padding: 56px 0 40px; }
 h1.title { font-family: var(--serif); font-weight: 400; font-size: 60px; line-height: 1.08; letter-spacing: -.012em; margin: 0; max-width: 15em; }
 .subtitle { font-size: 22px; font-style: italic; color: var(--fg); margin: 18px 0 0; max-width: 34em; line-height: 1.45; }
@@ -71,7 +71,7 @@ h1.title { font-family: var(--serif); font-weight: 400; font-size: 60px; line-he
 .byline .who { font-weight: 500; }
 .byline .meta { color: var(--muted); }
 .byline .code-link { color: var(--fg); }
-.byline .code-link:hover { color: var(--accent); }
+.byline .code-link:hover { color: var(--accent-hover); }
 nav.toc .toc-code { margin-top: 14px; font-weight: 400; }
 
 /* Lead: contents + teaser */
@@ -81,7 +81,7 @@ nav.toc p { margin: 0 0 8px; font-weight: 500; }
 nav.toc ol { list-style: none; margin: 0; padding: 0; }
 nav.toc li { margin: 0 0 6px; }
 nav.toc a { color: var(--fg); text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 3px; }
-nav.toc a:hover { color: var(--accent); }
+nav.toc a:hover { color: var(--accent-hover); }
 nav.toc .num { font-family: var(--mono); font-size: 12px; margin-right: 6px; }
 .lead > * { min-width: 0; }
 figure.fig figcaption.tldr { font-size: 21px; line-height: 1.5; margin: 20px 0 0; max-width: none; text-align: left; }
@@ -95,7 +95,7 @@ section.chapter > * + * { margin-top: 18px; }
 section.chapter > p { margin-bottom: 0; }
 h2 { font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 1.2; margin: 0 0 22px; }
 h2 .hash, h3 .hash { font-family: var(--mono); font-weight: 400; font-size: .62em; color: var(--muted); text-decoration: none; margin-right: 10px; vertical-align: .18em; }
-h2 .hash:hover, h3 .hash:hover { color: var(--accent); }
+h2 .hash:hover, h3 .hash:hover { color: var(--accent-hover); }
 h3 { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 36px 0 12px; }
 section.chapter ul { list-style: square outside; padding-left: 24px; margin-bottom: 0; }
 section.chapter li + li { margin-top: 8px; }
@@ -123,6 +123,7 @@ figure.fig figcaption .fignum { font-family: var(--mono); font-size: 12px; font-
 .fig-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: -8px 0 14px; }
 svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
 svg.chart text { font-family: var(--mono); }
+svg.chart * { vector-effect: non-scaling-stroke; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; margin-top: 10px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid currentColor; }
@@ -175,7 +176,6 @@ svg.chart text { font-family: var(--mono); }
 .body-card { border: 1px solid var(--fg); background: #fff; padding: 12px 14px; box-shadow: 0 2px 2px rgba(0,0,0,.07); }
 .body-card + .body-card { margin-top: 12px; }
 .body-card .name { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
-
 .meter { display: grid; grid-template-columns: 74px minmax(0,1fr) 36px; gap: 8px; align-items: center; font-size: 11.5px; margin-top: 4px; }
 .meter .track { height: 9px; border: 1px solid var(--fg); position: relative; background: #fff; }
 .meter .fill { position: absolute; inset: 0 auto 0 0; background: var(--fg); }
@@ -233,6 +233,33 @@ footer.end a { color: var(--fg); }
   .world-grid .world-label { margin-top: 10px; }
   blockquote.pull { font-size: 20px; }
 }
+
+/* Framing and prioritized next steps */
+.study-lens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 30px 0 14px; padding: 19px 0; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--line); }
+.study-lens > div { min-width: 0; }
+.study-lens span, .eyebrow { display: block; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--muted); }
+.study-lens p { font-size: 16px; line-height: 1.5; margin: 6px 0 0; }
+.question-focus { margin: 30px 0; border-left: 2px solid var(--fg); padding: 3px 0 3px 22px; }
+.question-focus p { font-size: 21px; line-height: 1.5; margin: 10px 0 0; }
+.roadmap { margin: 34px 0 42px; border-top: 2px solid var(--fg); }
+.roadmap-step { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 18px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+.roadmap-index { font-family: var(--mono); line-height: 1.4; }
+.roadmap-index b { display: block; font-size: 24px; font-weight: 500; }
+.roadmap-index span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+.roadmap-step h3 { margin: 0 0 8px; font-size: 22px; }
+.roadmap-step p { margin: 0; font-size: 17px; line-height: 1.6; }
+.roadmap-step .test-result { margin-top: 12px; font-size: 15px; line-height: 1.6; }
+@media (max-width: 640px) {
+  .study-lens { grid-template-columns: 1fr; gap: 17px; }
+  .question-focus p { font-size: 19px; }
+  .roadmap-step { grid-template-columns: 40px minmax(0,1fr); gap: 12px; padding: 22px 0; }
+  .roadmap-index b { font-size: 19px; }
+  .roadmap-index span { font-size: 9px; }
+  .roadmap-step h3 { font-size: 20px; }
+  .roadmap-step p { font-size: 16px; }
+  .roadmap-step .test-result { font-size: 14px; }
+}
+
 </style>
 </head>
 <body>
@@ -242,7 +269,7 @@ footer.end a { color: var(--fg); }
 
 <header class="masthead">
   <h1 class="title">What Would an AI Have to Unlearn in a Different World?</h1>
-  <p class="subtitle">An early experiment on the assumptions language models carry into unfamiliar environments</p>
+  <p class="subtitle">Can an AI recognize when what it already knows no longer fits the world it encounters?</p>
   <div class="byline">
     <span class="who">Arun Rajagopal</span>
     <span class="meta">October 14, 2026 · Research note · Water-v1</span>
@@ -257,10 +284,11 @@ footer.end a { color: var(--fg); }
       <li><a href="#world"><span class="num">1.</span>Change the world</a></li>
       <li><a href="#words"><span class="num">2.</span>Change only the words</a></li>
       <li><a href="#results"><span class="num">3.</span>What happened</a></li>
-      <li><a href="#surprise"><span class="num">4.</span>The surprise</a></li>
-      <li><a href="#inside"><span class="num">5.</span>Beliefs or actions?</a></li>
-      <li><a href="#why"><span class="num">6.</span>Why this matters</a></li>
-      <li><a href="#next"><span class="num">7.</span>What comes next</a></li>
+      <li><a href="#interpret"><span class="num">4.</span>What does the gap mean?</a></li>
+      <li><a href="#surprise"><span class="num">5.</span>The transfer puzzle</a></li>
+      <li><a href="#inside"><span class="num">6.</span>Beliefs or actions?</a></li>
+      <li><a href="#why"><span class="num">7.</span>Why it matters</a></li>
+      <li><a href="#next"><span class="num">8.</span>Research roadmap</a></li>
       <li><a href="#notes"><span class="num">·</span>Notes and limits</a></li>
     </ol>
     <p class="toc-code"><a href="https://github.com/arun-seran/planarity">Code ↗</a></p>
@@ -269,37 +297,42 @@ footer.end a { color: var(--fg); }
   <figure class="fig" style="margin:0" aria-labelledby="teaser-cap">
     <div class="frame">
       <div class="t-world">
-        <div class="t-world-text"><b>One world, one hidden rule</b>The valve that supplies water stays the same for the whole episode. Under this rule, a body that repeats well and switches badly comes out ahead.</div>
+        <div class="t-world-text"><b>01 / the stable world used for training</b>The same valve supplies water each cycle. A body that repeats reliably can now outperform a body that switches easily. The changing-world condition provides the comparison.</div>
         <svg class="chart" id="t-strip" role="img" aria-label="Valve 2 is active in every cycle"></svg>
       </div>
       <div class="t-grid">
         <div class="t-head"></div>
-        <div class="t-head">what the model reads</div>
-        <div class="t-head">learning this world · 64 episodes</div>
-        <div class="t-head">when the rule flips back · never trained there</div>
+        <div class="t-head">02 / example instructions</div>
+        <div class="t-head">03 / score after learning · 64 episodes</div>
+        <div class="t-head">04 / score in the changing world</div>
 
         <div class="t-label amber">Familiar words<small>Named</small></div>
-        <div class="t-cell"><span class="cap">what the model reads</span><span class="tok amber">inspect</span>: <span class="tok amber">valve</span> 2<br>last <span class="tok amber">open</span> 2 ok</div>
-        <div class="t-cell"><span class="cap">learning this world · 64 episodes</span><svg class="chart" id="t-spark-named" role="img" aria-label="Familiar words: score rises from -0.22 to 0.34 and 0.23"></svg></div>
-        <div class="t-cell"><span class="cap">when the rule flips back · never trained there</span><div class="result" id="teaser-named"></div></div>
+        <div class="t-cell"><span class="cap">02 / example instructions</span><span class="tok amber">inspect</span>: <span class="tok amber">valve</span> 2<br>last <span class="tok amber">open</span> 2 ok</div>
+        <div class="t-cell"><span class="cap">03 / score after learning · 64 episodes</span><svg class="chart" id="t-spark-named" role="img" aria-label="Familiar words: score rises from -0.22 to 0.34 and 0.23"></svg></div>
+        <div class="t-cell"><span class="cap">04 / score in the changing world</span><div class="result" id="teaser-named"></div></div>
 
         <div class="t-label violet">Invented words<small>Masked</small></div>
-        <div class="t-cell"><span class="cap">what the model reads</span><span class="tok violet">lom</span>: <span class="tok violet">unit</span> 2<br>last <span class="tok violet">kel</span> 2 ok</div>
-        <div class="t-cell"><span class="cap">learning this world · 64 episodes</span><svg class="chart" id="t-spark-masked" role="img" aria-label="Invented words: score rises to 0.92 and 0.90"></svg></div>
-        <div class="t-cell"><span class="cap">when the rule flips back · never trained there</span><div class="result" id="teaser-masked"></div></div>
+        <div class="t-cell"><span class="cap">02 / example instructions</span><span class="tok violet">lom</span>: <span class="tok violet">unit</span> 2<br>last <span class="tok violet">kel</span> 2 ok</div>
+        <div class="t-cell"><span class="cap">03 / score after learning · 64 episodes</span><svg class="chart" id="t-spark-masked" role="img" aria-label="Invented words: score rises to 0.92 and 0.90"></svg></div>
+        <div class="t-cell"><span class="cap">04 / score in the changing world</span><div class="result" id="teaser-masked"></div></div>
       </div>
-      <div class="teaser-foot">Same model (Qwen3.6-35B-A3B), same world, same actions. Only the words differ. Two training runs per row.<br>Score: 0 = random actions · 1 = a controller that knows the rule.</div>
+      <div class="teaser-foot">Same pretrained model, same environment and action IDs; the interface vocabulary changes. Two short training runs per row.<br>Score: 0 = random actions · 1 = a controller that knows the rule.</div>
     </div>
-    <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I built a simulated canal whose hidden rule makes a body that is good at repeating, and bad at switching, come out ahead. Then I trained one language model to act there, with the world described either in familiar words or in invented ones. With invented words, the model reached about 0.9 of a rule-aware controller within 64 episodes, and it kept that level when the rule flipped back. With familiar words, it reached 0.23 to 0.34, and its predictions about the canal shifted in a way that was wrong in the other world.</figcaption>
+    <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I designed a world where repeating an action is unusually valuable, then trained the same language model using two descriptions of that world. With invented labels, its final score reached 0.90–0.92; with familiar words, 0.23–0.34. The invented-label runs also scored highly under the opposite world rule. <strong>What caused the difference is still open.</strong> The next experiments ask whether the model was slowed by prior expectations, by the interface itself, or by something in how it learned.</figcaption>
   </figure>
 </div>
 
 <main>
 
 <section class="chapter" id="intro">
-  <p>What if there were a world where tendencies associated with neurodivergence, often treated as limitations in our present environments, became valuable capabilities? Imagine a world where repeating an action with great consistency matters more than switching quickly between tasks. How would we recognise ability there?</p>
-  <p>Now place an AI agent in that world. The agent learned from text written in <em>our</em> world, and that text carries our habits and assumptions about how things work. If the new world rewards different behaviour, can the agent learn to thrive there? What would it have to reconsider, learn, or unlearn?</p>
-  <p>That question led me to build <strong>Inverted-Utility World</strong>. The project changes the rules of a simulated environment and then studies how a language model adapts. This note covers the first small experiment.</p>
+  <p>What if there existed a world where a tendency often treated as unproductive in our own environment became a valuable capability? The idea came from thinking about neurodivergence and how strongly the surrounding world shapes what we recognize as ability.</p>
+  <p>Suppose such a world exists. Now ask an AI agent, trained on knowledge produced in <em>our</em> world, to operate there. Can it learn how that world works? What happens when the expectations it brings are useful in one setting and misleading in another? Does it need to change what it predicts, how it acts, or both?</p>
+  <p>That thought experiment led me to build <strong>Inverted-Utility World</strong>. First I designed a simple environment where the relative advantage of two fixed capabilities reverses. Then I used it to study a separate question: <strong>how does a pretrained model adapt when its familiar description of a task may influence what it expects to happen?</strong></p>
+  <div class="study-lens" aria-label="What this research separates">
+    <div><span>designed premise</span><p>Changing the world's rules changes which synthetic body performs better.</p></div>
+    <div><span>observed pilot</span><p>The same model learned faster with invented labels in this task.</p></div>
+    <div><span>open explanation</span><p>We do not yet know whether familiar associations caused that gap.</p></div>
+  </div>
 </section>
 
 <section class="chapter" id="world">
@@ -333,7 +366,7 @@ footer.end a { color: var(--fg); }
     <figcaption id="fig1-cap"><span class="fignum">Figure 1.</span>The same canal under two rules. Black marks the active valve. A controller that knows the rule inspects every cycle in the changing world. In the stable world it inspects once and then repeats the same command. The valve sequence shown is an example.</figcaption>
   </figure>
 
-  <p>The agent controls one of two <em>synthetic</em> bodies. Their abilities never change; only the world does. Body A almost always manages to repeat a command and rarely manages to switch. Body B is steady at both.</p>
+  <p>The model controls <strong>both</strong> of two synthetic bodies, in equal numbers of training episodes. Body A almost always executes a repeated command but rarely executes a changed one. Body B executes either kind with the same reliability. Their abilities stay fixed while the world changes.</p>
 
   <figure class="fig" aria-labelledby="fig2-cap">
     <div class="frame">
@@ -394,7 +427,9 @@ footer.end a { color: var(--fg); }
     <figcaption id="fig3-cap"><span class="fignum">Figure 3.</span>The opening of one stable-world episode as the model sees it. Bold digits are the model's replies. Only the highlighted words differ. Neither tutorial says whether the active valve keeps changing or stays fixed. Each Masked run used a different assignment of labels to roles.</figcaption>
   </figure>
 
-  <p>I trained the same base model, <strong>Qwen3.6-35B-A3B</strong>, with reinforcement learning in each version. It had to learn from the consequences of its own actions. Training updated a small LoRA adapter and left the original weights frozen. The question was simple: <strong>does familiar language help the model learn this world, or do its existing associations slow it down?</strong></p>
+  <p>This was <strong>one base model, Qwen3.6-35B-A3B</strong>, with a separately trained small LoRA adapter for each run. Training used feedback from the model's own actions and kept the base weights fixed. Every run included both bodies. I varied the descriptive vocabulary while holding the simulator's rules, action digits and information constant.</p>
+  <p>Invented words do not make the model a blank slate. It still understands the numbers, the instructions, the feedback and much of the task structure through pretraining. The test removes some familiar associations from the interface; it does not separate word meaning from the model's underlying representations.</p>
+  <blockquote class="pull">Do familiar words help an agent learn a new world's rules, or can the expectations they evoke sometimes slow it down?</blockquote>
 </section>
 
 <section class="chapter" id="results">
@@ -409,35 +444,47 @@ footer.end a { color: var(--fg); }
           <button type="button" aria-pressed="false" data-world="changing">scored in: changing</button>
         </span>
       </div>
-      <div class="fig-sub" id="fig4-sub">Coloured: the four runs that trained in this world. Grey: the two runs that trained in the changing world.</div>
+      <div class="fig-sub" id="fig4-sub">Coloured: the four runs trained in the stable world and scored in the stable world. Grey: the two runs trained in the changing world and scored in the stable world.</div>
       <svg class="chart" id="curves" role="img" aria-label="Learning curves"></svg>
       <div class="legend" id="curves-legend"></div>
     </div>
     <figcaption id="fig4-cap"><span class="fignum">Figure 4.</span>Normalised score per run, averaged over both bodies. 0 is random actions and 1 is a controller that knows the rule. Each point comes from four episodes per world. Switch the toggle to see how the same models did in the world they did not train in.</figcaption>
   </figure>
 
-  <p>In the stable world, both Masked runs reached <strong>0.92 and 0.90</strong>. One of them was already at 0.90 after 32 episodes. The Named runs ended at <strong>0.34 and 0.23</strong>. Before training, the model scored below random in this world in both versions, so whatever it brought to the task worked against it at first.</p>
-  <p>The world was the same. Only the description changed. That alone does not show that pretrained beliefs caused the gap. Some labels may be easier for the model to process, and one Masked labelling started higher before any training (0.05 against −0.22). The next experiments need to test both alternatives.</p>
+  <p>In the stable world, the two Masked runs reached <strong>0.92 and 0.90</strong>. One was already at 0.90 after 32 episodes. The Named runs ended at <strong>0.34 and 0.23</strong>. Most initial stable-world scores were below random, though one Masked label assignment started at 0.05. The gap after training is large in this pilot, but the starting points were not identical.</p>
+  <p>The underlying world, rewards and available actions were unchanged. <strong>The descriptive vocabulary differed.</strong> That makes the difference worth investigating; it does not by itself identify the cause.</p>
 
   <h3>A second view: learning cost</h3>
-  <p>Final scores show where a run ended. <strong>Learning cost</strong> counts how much reward a run missed along the way, compared with the rule-aware controller, summed over all 64 training episodes. Lower is better. Comparing the cost across both worlds removes how hard each world is on its own, and leaves the extra cost tied to the words.</p>
+  <p>Final scores show where a run ended. <strong>Learning cost</strong> counts the reward it missed along the way compared with the rule-aware controller, summed over 64 episodes. Lower is better. By comparing the learning-cost difference between worlds for each vocabulary, I tried to separate a world-specific vocabulary effect from the difficulty of the world itself.</p>
 
   <figure class="fig" aria-labelledby="fig5-cap">
     <div class="frame">
       <div class="fig-title"><span>Learning cost over 64 episodes</span></div>
       <svg class="chart" id="cost" role="img" aria-label="Learning cost. Familiar words: changing world 1,941, stable world 3,828. Invented words: changing world 2,012, stable world 2,447. Extra cost of the stable world: 1,887 versus 435, a difference of 1,452."></svg>
     </div>
-    <figcaption id="fig5-cap"><span class="fignum">Figure 5.</span>Bars are cell means and dots are single runs. Moving to the stable world adds 1,887 to the cost with familiar words and 435 with invented words. The difference, <strong>+1,452</strong>, is the extra learning cost associated with familiar words.</figcaption>
+    <figcaption id="fig5-cap"><span class="fignum">Figure 5.</span>Bars are cell means and dots are single runs. The estimated cost added by the stable world is 1,887 with familiar words and 435 with invented labels. Their difference is <strong>+1,452</strong>, a preliminary measure of vocabulary-associated learning cost; the changing-world baselines each have one run.</figcaption>
   </figure>
 
-  <p>Both stable-world seeds point the same way (+770 and +2,134). The changing-world cells have <strong>one run each</strong>, though, so the uncertainty estimate only covers spread in the stable-world runs. Treat +1,452 as a preliminary estimate and not as a confirmed measure of prior conflict.</p>
+  <p>The estimated difference is <strong>+1,452</strong> units of learning cost, with both available seed pairings pointing in the same direction (+770 and +2,134). But the changing-world conditions have <strong>one run each</strong>. The reported interval [770, 2,134] omits their uncertainty. For now, this is a <em>positive signal of label-associated interference</em>, not a confirmed measurement of a conflicting prior.</p>
+</section>
+
+<section class="chapter" id="interpret">
+  <h2><a class="hash" href="#interpret" aria-label="Link to this section">#</a>What does the gap mean?</h2>
+  <p>My working hypothesis is that familiar language can activate expectations learned during pretraining. When those expectations do not fit a new environment, they may influence what an agent tries, how it interprets feedback, and what it learns. Invented labels may reduce some of those associations and encourage the model to rely on the consequences of its actions.</p>
+  <div class="question-focus">
+    <span class="eyebrow">an unexpected puzzle</span>
+    <p>Intuitively, a valve that supplies water might be expected to keep supplying it. That expectation fits the <em>stable</em> world. Yet familiar valve language was associated with <strong>slower</strong> learning precisely there. <strong>Which prior, if any, was working against the model?</strong></p>
+  </div>
+  <p>I cannot yet name one. Perhaps <em>inspect</em> or <em>open</em> evokes a different strategy. Perhaps the invented labels are simply easier for this model to process or optimize against. An interface-understanding test was not run, and one invented-label assignment started at a higher score even before training.</p>
+  <p>There is an important distinction here: <strong>the result is a difference associated with wording; prior conflict is a proposed explanation.</strong> It would also be premature to conclude that agents should rely on relationships instead of vocabulary. Word meaning is part of the knowledge that makes language models useful. This experiment asks when those associations help, when they hinder, and how an agent could tell the difference.</p>
 </section>
 
 <section class="chapter" id="surprise">
-  <h2><a class="hash" href="#surprise" aria-label="Link to this section">#</a>The surprise: it also worked when the world changed back</h2>
-  <p>Every checkpoint was also scored in the changing world, where the stable-world models never trained. The Masked models from the stable world scored <strong>0.94 and 0.95</strong> there. The Named models scored 0.62 and 0.19. You can see this by switching <a href="#fig4" data-goto="changing">Figure 4 to the changing world</a>.</p>
-  <p>The two models trained in the changing world finished at 0.32. That comparison needs care. Those runs barely moved in 64 episodes (Named went from 0.18 to 0.32, Masked from 0.36 to 0.32), so "better than training there" mostly means that training there had not got going yet.</p>
-  <p>One possibility is that the Masked models learned a flexible way to use observations, like checking the current valve and acting on what they saw, which works under both rules. I don't know yet whether that is what happened. Each score check used only four episodes per world, so the transfer result needs larger evaluations and direct tests of the models' choices. Still, it is the result that most changed what I want to study next: <strong>how an agent learns a rule it can reuse when conditions change</strong>, as much as what it has to discard.</p>
+  <h2><a class="hash" href="#surprise" aria-label="Link to this section">#</a>The transfer puzzle: the other world also worked</h2>
+  <p>Every checkpoint was also evaluated in the changing world, even when it had trained only in the stable one. The Masked stable-world adapters scored <strong>0.94 and 0.95</strong> after the rule flipped. The Named counterparts scored 0.62 and 0.19. You can explore the results by switching <a href="#fig4" data-goto="changing">Figure 4 to the changing world</a>.</p>
+  <p>Why might this happen? A strategy such as <em>use observations to guide actions</em> could work under both rules. A learned belief such as <em>the valve will stay active</em> would work in one world and fail in the other. The transfer result makes that distinction worth examining.</p>
+  <p>At this point, that explanation remains a possibility. The changing-world-trained adapters themselves ended at 0.32 after 64 episodes, and those runs made little progress. Each evaluation point also used just four episodes per world. We need larger tests and the actual action traces before concluding that the Masked model learned a reusable strategy.</p>
+  <p><strong>The new question is about context-sensitive learning:</strong> can an agent adapt to a new rule without carrying it into situations where it no longer applies?</p>
 </section>
 
 <section class="chapter" id="inside">
@@ -453,41 +500,79 @@ footer.end a { color: var(--fg); }
     <figcaption id="fig6-cap"><span class="fignum">Figure 6.</span>Next-valve error is the distance between the model's guess for the next active valve and the world's true rule; lower is closer. Named moved its guesses toward "the valve stays", including in the changing world where that is wrong. Masked left its guesses alone and inspected more often.</figcaption>
   </figure>
 
-  <p>With familiar words, the model's <strong>predictions</strong> changed. It got better at predicting that a valve stays active in the stable world, and it carried that expectation into the changing world, where it is wrong. With invented words, its <strong>actions</strong> changed more visibly: it became more likely to inspect, while its predictions barely moved.</p>
-  <p>These come from one small inspection, so they are not proof that one model revised a belief while the other found a general strategy. Predictions read out of a model are still model outputs, not direct access to what it understands. And because training only added a LoRA adapter, this experiment cannot show that the model erased its original knowledge. It shows that training changed behaviour and some measured predictions. Whether that counts as <em>unlearning</em> needs a more careful test.</p>
+  <p>With familiar words, the adapter's <strong>next-valve predictions</strong> improved for the stable world but became less accurate for the changing world. With invented words, that prediction measure barely moved, while the model's estimated chance of probing rose from 0.050 to 0.064. Its agreement with the rule-aware planner in the stable world actually fell slightly in these replay tests.</p>
+  <p>That suggests different <em>measured patterns</em> of adaptation, not proof of two distinct internal learning mechanisms. The inspection examined one matched pair, and elicited predictions are outputs rather than direct access to internal beliefs. Because the base weights stayed frozen, there is also no evidence here that the model erased pretrained knowledge. <strong>“Unlearning” in the title is a question the experiment is designed to investigate.</strong></p>
 </section>
 
 <section class="chapter" id="why">
   <h2><a class="hash" href="#why" aria-label="Link to this section">#</a>Why this matters for AI safety and alignment</h2>
-  <p>As AI agents take on longer tasks, they will meet environments where the familiar reading of an action is wrong, incomplete, or no longer useful. What an agent knows can help it act quickly. It can also shape what the agent notices, how it reads feedback, and which strategies it thinks are worth trying. A few questions follow for agents that must stay reliable in unfamiliar conditions:</p>
+  <p>An agent entering a new environment brings a powerful starting model of the world. That knowledge makes it capable, but it also influences how it interprets instructions and feedback. Reliability requires the agent to recognize when a useful expectation has become a poor guide.</p>
+  <p>For me, this connects the toy canal to a larger question: <strong>how can an agent distinguish what it already expects from what the environment is showing it?</strong> I see four testable parts of that problem:</p>
   <ul>
-    <li><strong>Recognition:</strong> can an agent detect when its learned assumptions do not fit the environment it is in?</li>
-    <li><strong>Adaptation:</strong> can it learn new rules from feedback without carrying a mistaken rule into other situations?</li>
-    <li><strong>Transfer:</strong> does it learn a narrow behaviour that works once, or a way of acting that survives a change in conditions?</li>
-    <li><strong>Interpretability:</strong> when behaviour improves, can we tell whether its predictions changed, its strategy changed, or both?</li>
+    <li><strong>Detect mismatch.</strong> Notice when observations are repeatedly inconsistent with an assumed rule.</li>
+    <li><strong>Adapt from evidence.</strong> Learn which actions work under the rules actually observed.</li>
+    <li><strong>Keep the rule in context.</strong> Avoid treating something learned in one environment as true in every environment.</li>
+    <li><strong>Explain the change causally.</strong> Test whether adaptation changed predictions, action choice, or both, rather than inferring a mechanism from success alone.</li>
   </ul>
-  <p>This experiment does not answer those questions. It gives me a controlled place to ask them.</p>
+  <p>The practical possibility is an agent that uses its pretrained knowledge as a starting point, updates it when evidence demands, and preserves other useful knowledge. The pilot does not demonstrate this capability. It provides a small environment in which to study it.</p>
 </section>
 
 <section class="chapter" id="next">
-  <h2><a class="hash" href="#next" aria-label="Link to this section">#</a>What comes next</h2>
-  <p>The first priority is replication: all four conditions across more seeds, and many more scoring episodes per checkpoint. Before I attribute any difference to prior associations, I also need an interface test showing that the model understands the familiar and the invented controls equally well.</p>
-  <p>After that, I want to vary how often the active valve changes, add worlds with less obvious links between actions and outcomes, and compare familiar words, invented labels and explicitly stated rules.</p>
-  <blockquote class="pull">When an AI enters a world that differs from the one described by its training data, what must change inside the model for it to understand the new world and act well in it?</blockquote>
-  <p>This first pilot gives a reason to keep asking. It is not yet an answer.</p>
+  <h2><a class="hash" href="#next" aria-label="Link to this section">#</a>Research roadmap: from a learning gap to an explanation</h2>
+  <p>The pilot suggests several possible explanations. I want the next experiments to distinguish between them, one decision at a time. <strong>The immediate priority is to learn whether the vocabulary gap survives careful controls.</strong> The longer-term goal is to test whether an agent can recognize and manage a mismatch between its priors and the world.</p>
+
+  <div class="roadmap" aria-label="Prioritized research experiments">
+    <div class="roadmap-step">
+      <div class="roadmap-index"><b>01</b><span>first</span></div>
+      <div>
+        <h3>Make the effect reliable</h3>
+        <p>Complete the four training conditions with at least three independent seeds each. Re-evaluate every final adapter on substantially more held-out episodes, separately for both bodies and both worlds. Report the full uncertainty of the learning-cost comparison.</p>
+        <p class="test-result"><strong>What this settles:</strong> whether the large gap and the apparent transfer are reproducible rather than artifacts of a few runs or noisy score checks.</p>
+      </div>
+    </div>
+    <div class="roadmap-step">
+      <div class="roadmap-index"><b>02</b><span>isolate</span></div>
+      <div>
+        <h3>Find out what the words are doing</h3>
+        <p>First test whether the untrained model understands the two interfaces equally well. Then run familiar words, neutral descriptions, invented labels, and alternative label assignments. Most importantly, <strong>tell the model the hidden rule explicitly</strong> in a separate control.</p>
+        <p class="test-result"><strong>What this tells us:</strong> if stating the rule closes the gap, discovering or using that rule is implicated. If the gap persists, interface or learning mechanics deserve closer attention. Neither outcome alone proves a particular prior.</p>
+      </div>
+    </div>
+    <div class="roadmap-step">
+      <div class="roadmap-index"><b>03</b><span>transfer</span></div>
+      <div>
+        <h3>Test whether a reusable strategy emerged</h3>
+        <p>Evaluate the agents across intermediate worlds where the supplying valve changes sometimes, and test with clear cues about which world is active. Compare their choices: when do they inspect, repeat, or switch? Does the same strategy survive a rule change?</p>
+        <p class="test-result"><strong>What this tells us:</strong> whether the high cross-world scores reflect a general observation-driven policy or a more fragile shortcut.</p>
+      </div>
+    </div>
+    <div class="roadmap-step">
+      <div class="roadmap-index"><b>04</b><span>mechanism</span></div>
+      <div>
+        <h3>Identify what adaptation changed</h3>
+        <p>Repeat the matched-performance inspections across seeds. Measure predictions and actions on the same histories, then switch off or restore selected adapter components to see whether the advantage disappears and returns. Test whether a reminder about the old world restores performance.</p>
+        <p class="test-result"><strong>What this tells us:</strong> whether a change is causally connected to successful behavior, and whether errors on the return trip reflect a lost rule or a failure to select the right one.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Beyond the canal</h3>
+  <p>If these controls hold, I want to repeat the study in worlds with different causal rules and less obvious links between actions and outcomes. Eventually, worlds could be searched rather than hand-designed. That would let us ask which environments expose the strongest mismatch between pretrained expectations and observed reality, without assuming a specific conflict in advance.</p>
+  <blockquote class="pull">Can an AI learn the rules of a world that contradicts what it expects, while retaining the ability to operate in the world it came from?</blockquote>
+  <p>That is the question I want the next experiments to make more precise.</p>
 </section>
 
 <details class="notes" id="notes">
   <summary>Experiment notes and limits</summary>
   <ul>
-    <li><strong>Dates:</strong> experiment run on October 13–14, 2026. This note reports what ran, not everything in the original specification.</li>
+    <li><strong>Dates:</strong> experiment run on October 13–14, 2026.</li>
     <li><strong>Model:</strong> <code>Qwen/Qwen3.6-35B-A3B</code> in bf16 with a rank-32 LoRA adapter on every linear layer: attention, linear attention and the shared-expert MLP. The base weights and the 256 routed experts stayed frozen.</li>
     <li><strong>Training:</strong> six runs of 64 episodes each (8 updates of 8 episodes) on one H200 GPU; policy-gradient updates over legal actions only; one learning rate, 4e-5, chosen for the budget.</li>
     <li><strong>Scoring:</strong> checked at 0, 32 and 64 episodes on two seeds × two bodies per world, so four episodes per world per checkpoint. The score is normalised per body and world, against random actions (0) and a known-rule planner (1), then averaged over the two bodies.</li>
     <li><strong>Runs:</strong> stable world, two seeds per vocabulary; changing world, one seed per vocabulary. Each Masked seed used a different label mapping.</li>
     <li><strong>Learning cost:</strong> +1,452 comes from two stable-world runs and one changing-world run per vocabulary. The partial bootstrap interval [770, 2,134] leaves out uncertainty in the changing-world cells and is not a full 95% confidence interval.</li>
     <li><strong>Inspection:</strong> one matched-score pair of adapters, replayed on eight held-out episodes per world in which one action in four is random. An earlier check on the final seed-0 adapters, using easier replays, pointed the same way. Both need replication and causal tests.</li>
-    <li><strong>Not yet done:</strong> interface-understanding quiz, sealed test, controls for labelling and world rules, and a larger multi-seed study. No run met the stricter sustained-adaptation criterion (a score of at least 0.9 on three checks in a row).</li>
+    <li><strong>Not yet done:</strong> interface-understanding quiz; explicitly supplied-rule control; sealed test; alternative wordings and label mappings; and a larger multi-seed study. No run met the stricter sustained-adaptation criterion (a score of at least 0.9 on three checks in a row).</li>
     <li><strong>Code:</strong> the simulator, training loop, analysis and run scripts are at <a href="https://github.com/arun-seran/planarity">github.com/arun-seran/planarity</a>. Run logs and adapter checkpoints are not in the repository.</li>
     <li><strong>Scope:</strong> one model, one training setup, one deliberately built world. Nothing here supports claims about neurodivergent cognition, human value, or a general failure of deployed AI agents.</li>
   </ul>
@@ -562,7 +647,7 @@ footer.end a { color: var(--fg); }
     el("text", { x: W - R, y: H - 2, "text-anchor": "end", "font-size": 8.5, fill: C.muted }, svg, "64");
     runs.forEach(function (v, k) {
       var d = v.map(function (val, i) { return (i ? "L" : "M") + x([0, 32, 64][i]) + " " + y(val); }).join(" ");
-      el("path", { d: d, fill: "none", stroke: color, "stroke-width": 2.5, "stroke-dasharray": k ? "5 3" : "" }, svg);
+      el("path", { d: d, fill: "none", stroke: color, "stroke-width": 1, "stroke-dasharray": k ? "5 3" : "" }, svg);
     });
     var endY = runs.reduce(function (a, v) { return a + y(v[2]); }, 0) / runs.length;
     el("text", { x: W - R + 6, y: endY + 4, "font-size": 11, "font-weight": 600, fill: labelColor }, svg, endLabel);
@@ -641,10 +726,10 @@ footer.end a { color: var(--fg); }
     el("text", { x: xs[0], y: y(65.00) - 16, "text-anchor": "middle", "font-size": 10.5, "font-weight": 600 }, svg, "B ahead");
     el("text", { x: xs[1], y: y(92.07) - 16, "text-anchor": "middle", "font-size": 10.5, "font-weight": 600 }, svg, "A ahead");
     series.forEach(function (s, si) {
-      el("line", { x1: xs[0], y1: y(s.v[0]), x2: xs[1], y2: y(s.v[1]), stroke: s.color, "stroke-width": 2.5, "stroke-dasharray": s.dash }, svg);
+      el("line", { x1: xs[0], y1: y(s.v[0]), x2: xs[1], y2: y(s.v[1]), stroke: s.color, "stroke-width": 1, "stroke-dasharray": s.dash }, svg);
       s.v.forEach(function (v, i) {
         var win = best[i] === si;
-        el("circle", { cx: xs[i], cy: y(v), r: win ? 7 : 5, fill: win ? s.color : "#fff", stroke: s.color, "stroke-width": 2 }, svg);
+        el("circle", { cx: xs[i], cy: y(v), r: win ? 7 : 5, fill: win ? s.color : "#fff", stroke: s.color, "stroke-width": 1 }, svg);
         el("text", { x: xs[i] + (i ? 14 : -14), y: y(v) + 4, "text-anchor": i ? "start" : "end", "font-size": 12,
           "font-weight": 600, fill: s.color }, svg, v.toFixed(2));
       });
@@ -688,9 +773,9 @@ footer.end a { color: var(--fg); }
       var colorful = r.trained === "stable";
       var stroke = r.color, op = (world === "stable" && !colorful) ? 0.9 : 1;
       var d = v.map(function (val, i) { return (i ? "L" : "M") + x([0, 32, 64][i]) + " " + y(val); }).join(" ");
-      el("path", { d: d, fill: "none", stroke: stroke, "stroke-width": 1, "vector-effect": "non-scaling-stroke", "stroke-dasharray": r.dash, opacity: op }, svg);
+      el("path", { d: d, fill: "none", stroke: stroke, "stroke-width": 1, "stroke-dasharray": r.dash, opacity: op }, svg);
       v.forEach(function (val, i) {
-        el("circle", { cx: x([0, 32, 64][i]), cy: y(val), r: 3, fill: "#fff", stroke: stroke, "stroke-width": 1, "vector-effect": "non-scaling-stroke", opacity: op }, svg);
+        el("circle", { cx: x([0, 32, 64][i]), cy: y(val), r: 3, fill: "#fff", stroke: stroke, "stroke-width": 1, opacity: op }, svg);
       });
       ends.push({ r: r, y: y(v[2]), v: v[2], here: trainedHere });
     });
@@ -718,8 +803,8 @@ footer.end a { color: var(--fg); }
     });
     document.getElementById("fig4-title").textContent = w === "stable" ? "Score in the stable world" : "Score in the changing world";
     document.getElementById("fig4-sub").textContent = w === "stable"
-      ? "Coloured: the four runs that trained in this world. Grey: the two runs that trained in the changing world."
-      : "Coloured: the four runs that trained in the stable world, scored here without training here. Grey: the two runs that trained in this world.";
+      ? "Coloured: trained in stable, scored in stable. Grey: trained in changing, scored in stable."
+      : "Coloured: trained in stable, scored in changing. Grey: trained in changing, scored in changing.";
     drawCurves();
   }
   document.querySelectorAll("[data-world]").forEach(function (b) {
@@ -751,8 +836,8 @@ footer.end a { color: var(--fg); }
     groups.forEach(function (g, gi) {
       var cx = L + gw * gi + gw / 2;
       var xc = cx - bw * 0.75, xs = cx + bw * 0.75;
-      el("rect", { x: xc - bw / 2, y: y(g.ch), width: bw, height: y(0) - y(g.ch), fill: "#fff", stroke: g.color, "stroke-width": 1.5 }, svg);
-      el("rect", { x: xs - bw / 2, y: y(g.st), width: bw, height: y(0) - y(g.st), fill: g.tint, stroke: g.color, "stroke-width": 1.5 }, svg);
+      el("rect", { x: xc - bw / 2, y: y(g.ch), width: bw, height: y(0) - y(g.ch), fill: "#fff", stroke: g.color, "stroke-width": 1 }, svg);
+      el("rect", { x: xs - bw / 2, y: y(g.st), width: bw, height: y(0) - y(g.st), fill: g.tint, stroke: g.color, "stroke-width": 1 }, svg);
       g.chRuns.forEach(function (v) { el("circle", { cx: xc, cy: y(v), r: 4, fill: g.color }, svg); });
       g.stRuns.forEach(function (v, i) { el("circle", { cx: xs + (i ? 9 : -9), cy: y(v), r: 4, fill: g.color }, svg); });
       el("text", { x: xc, y: y(0) + 15, "text-anchor": "middle", "font-size": 10.5 }, svg, "changing");
@@ -762,7 +847,7 @@ footer.end a { color: var(--fg); }
       el("text", { x: xs, y: Math.min(y(g.st), y(Math.max.apply(null, g.stRuns))) - 8, "text-anchor": "middle", "font-size": 11 }, svg, g.st.toLocaleString("en-US"));
       // bracket for the extra cost of the stable world
       var bx = xs + bw / 2 + (small ? 6 : 14);
-      el("path", { d: "M" + bx + " " + y(g.ch) + " h6 V" + y(g.st) + " h-6", fill: "none", stroke: g.color, "stroke-width": 1.5 }, svg);
+      el("path", { d: "M" + bx + " " + y(g.ch) + " h6 V" + y(g.st) + " h-6", fill: "none", stroke: g.color, "stroke-width": 1 }, svg);
       el("line", { x1: xc + bw / 2, x2: bx, y1: y(g.ch), y2: y(g.ch), stroke: g.color, "stroke-dasharray": "2 3" }, svg);
       el("text", { x: bx + 10, y: (y(g.ch) + y(g.st)) / 2 + 4, "font-size": small ? 11 : 13, "font-weight": 600, fill: g.dark }, svg, "+" + g.extra.toLocaleString("en-US"));
     });
@@ -807,9 +892,9 @@ footer.end a { color: var(--fg); }
         [["named", C.amberMid, "Named", C.amber], ["masked", C.violetMid, "Masked", C.violet]].forEach(function (s, si) {
           var cy = base + (si ? rowH * 1.45 : rowH * 0.62);
           var a = r[s[0]][0], b = r[s[0]][1];
-          el("line", { x1: x(a), x2: x(b), y1: cy, y2: cy, stroke: s[1], "stroke-width": 3 }, svg);
-          el("circle", { cx: x(a), cy: cy, r: 5, fill: "#fff", stroke: s[1], "stroke-width": 2 }, svg);
-          el("circle", { cx: x(b), cy: cy, r: 5.5, fill: s[1] }, svg);
+          el("line", { x1: x(a), x2: x(b), y1: cy, y2: cy, stroke: s[1], "stroke-width": 1 }, svg);
+          el("circle", { cx: x(a), cy: cy, r: 4.2, fill: "#fff", stroke: s[1], "stroke-width": 1 }, svg);
+          el("circle", { cx: x(b), cy: cy, r: 4.5, fill: s[1] }, svg);
           var right = Math.max(x(a), x(b));
           var fmt = p.max < 1 && p.max > 0.1 ? 2 : 3;
           el("text", { x: right + 10, y: cy + 4, "font-size": 11, fill: s[3], "font-weight": 600 }, svg,
