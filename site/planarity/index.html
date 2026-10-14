@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Would an AI Have to Unlearn in a Different World? · Arun Rajagopal</title>
+<meta name="description" content="An early experiment on the assumptions language models carry into unfamiliar environments: one simulated world, described with familiar words or invented ones.">
+<meta property="og:title" content="What Would an AI Have to Unlearn in a Different World?">
+<meta property="og:description" content="One simulated world, two vocabularies. With invented words, the same model learned the world much faster.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://arunrl.com/planarity">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..600;1,8..60,300..600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fg: #000;
+  --bg: #fff;
+  --muted: #787168;
+  --line: #d0ccc8;
+  --surface: #f6f5f4;
+  --surface-raised: #e3e1de;
+  --dot: #d4d4d4;
+  --accent: #0d9488;
+  --accent-hover: #0f766e;
+  --amber: #d97706;
+  --amber-mid: #f59e0b;
+  --amber-tint: #fef3c7;
+  --violet: #7c3aed;
+  --violet-mid: #8b5cf6;
+  --violet-tint: #ede9fe;
+  --grey: #8a8580;
+  --green: #16a34a;
+  --water: #3ca3c8;
+  --water-dark: #24677f;
+  --water-tint: #e3f2f8;
+  --teal: #0d9488;
+  --body-a: #c45f84;
+  --body-a-tint: #f6e3ea;
+  --body-b: #5b8a3a;
+  --body-b-tint: #e8f0df;
+  --red: #dc2626;
+  --serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --gutter: 96px;
+  --content: 1024px;
+  --prose: 700px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 350;
+  line-height: 1.65;
+  font-optical-sizing: auto;
+}
+a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--accent-hover); }
+strong, b { font-weight: 600; }
+em { font-style: italic; }
+code { font-family: var(--mono); font-size: .82em; border: 1px solid var(--line); background: var(--surface); padding: 0 4px; }
+
+.page { max-width: calc(var(--content) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter) 96px; }
+
+/* Header */
+.crumbs { font-family: var(--sans); font-size: 14px; padding: 28px 0 0; }
+.crumbs a { color: var(--fg); text-decoration: none; }
+.crumbs a:hover { color: var(--accent); }
+header.masthead { padding: 56px 0 40px; }
+h1.title { font-family: var(--serif); font-weight: 400; font-size: 60px; line-height: 1.08; letter-spacing: -.012em; margin: 0; max-width: 15em; }
+.subtitle { font-size: 22px; font-style: italic; color: var(--fg); margin: 18px 0 0; max-width: 34em; line-height: 1.45; }
+.byline { font-family: var(--sans); font-size: 15px; margin-top: 28px; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.byline .who { font-weight: 500; }
+.byline .meta { color: var(--muted); }
+.byline .code-link { color: var(--fg); }
+.byline .code-link:hover { color: var(--accent); }
+nav.toc .toc-code { margin-top: 14px; font-weight: 400; }
+
+/* Lead: contents + teaser */
+.lead { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 48px; align-items: start; }
+nav.toc { font-family: var(--sans); font-size: 14px; line-height: 1.6; position: sticky; top: 24px; }
+nav.toc p { margin: 0 0 8px; font-weight: 500; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc li { margin: 0 0 6px; }
+nav.toc a { color: var(--fg); text-decoration: underline dotted; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+nav.toc a:hover { color: var(--accent); }
+nav.toc .num { font-family: var(--mono); font-size: 12px; margin-right: 6px; }
+.lead > * { min-width: 0; }
+figure.fig figcaption.tldr { font-size: 21px; line-height: 1.5; margin: 20px 0 0; max-width: none; text-align: left; }
+.tldr b { font-weight: 600; }
+
+/* Prose */
+main { margin-top: 72px; }
+section.chapter { max-width: var(--prose); margin: 0 auto; scroll-margin-top: 32px; }
+section.chapter + section.chapter { margin-top: 64px; }
+section.chapter > * + * { margin-top: 18px; }
+section.chapter > p { margin-bottom: 0; }
+h2 { font-family: var(--serif); font-weight: 500; font-size: 30px; line-height: 1.2; margin: 0 0 22px; }
+h2 .hash, h3 .hash { font-family: var(--mono); font-weight: 400; font-size: .62em; color: var(--muted); text-decoration: none; margin-right: 10px; vertical-align: .18em; }
+h2 .hash:hover, h3 .hash:hover { color: var(--accent); }
+h3 { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 36px 0 12px; }
+section.chapter ul { list-style: square outside; padding-left: 24px; margin-bottom: 0; }
+section.chapter li + li { margin-top: 8px; }
+.callout { background: var(--surface); padding: 18px 22px; font-size: 17px; line-height: 1.6; }
+.callout p { margin: 0; }
+.callout p + p { margin-top: 10px; }
+blockquote.pull { margin: 36px 0; padding: 0 0 0 22px; border-left: 2px solid var(--fg); font-size: 24px; line-height: 1.45; font-style: italic; }
+
+/* Figures */
+figure.fig { margin: 44px auto; max-width: var(--content); }
+section.chapter > figure.fig { width: min(var(--content), calc(100vw - 2 * var(--gutter))); max-width: none; position: relative; left: 50%; transform: translateX(-50%); }
+.frame {
+  border: 1px solid var(--fg);
+  padding: 22px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  background-color: #fff;
+  background-image: radial-gradient(circle, var(--dot) .65px, transparent .8px);
+  background-size: 6px 6px;
+}
+figure.fig figcaption { max-width: 46rem; margin: 14px auto 0; text-align: center; font-family: var(--serif); font-size: 15px; line-height: 1.6; }
+figure.fig figcaption .fignum { font-family: var(--mono); font-size: 12px; font-weight: 600; margin-right: 8px; }
+.fig-title { font-family: var(--mono); font-size: 15px; font-weight: 500; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fig-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin: -8px 0 14px; }
+svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+svg.chart text { font-family: var(--mono); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid currentColor; }
+.sw.dash { border-top-style: dashed; }
+
+/* Tokens */
+.tok { display: inline-block; border: 1px solid var(--fg); background: #fff; padding: 1px 6px; margin: 0 1px; white-space: nowrap; box-shadow: 0 2px 2px rgba(0,0,0,.07); }
+.tok.amber { border-color: var(--amber-mid); background: var(--amber-tint); }
+.tok.violet { border-color: var(--violet-mid); background: var(--violet-tint); }
+.tok.plain { border-color: transparent; background: transparent; box-shadow: none; padding: 1px 2px; margin: 0; }
+.tok.act { font-weight: 600; }
+.chip { display: inline-block; font-family: var(--mono); font-size: 12px; padding: 1px 6px; border: 1px solid var(--fg); background: #fff; }
+.chip.amber { border-color: var(--amber-mid); background: var(--amber-tint); }
+.chip.violet { border-color: var(--violet-mid); background: var(--violet-tint); }
+.chip.teal { border-color: var(--teal); background: #ccfbf1; }
+.chip.water { border-color: var(--water-dark); background: var(--water); color: #fff; }
+
+/* Segmented toggle */
+.seg { display: inline-flex; border: 1px solid var(--fg); background: #fff; }
+.seg button { font-family: var(--mono); font-size: 12px; padding: 3px 9px; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--fg); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: #fff; }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Teaser */
+.t-world { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 18px; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.t-world-text { font-size: 12px; line-height: 1.55; }
+.t-world-text b { display: block; font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.t-grid { display: grid; grid-template-columns: 104px minmax(0, .9fr) minmax(0, 1.35fr) minmax(0, 1fr); gap: 10px 26px; align-items: center; margin-top: 14px; }
+.t-head { font-size: 11px; color: var(--muted); line-height: 1.35; align-self: end; }
+.t-label { font-size: 12.5px; font-weight: 600; line-height: 1.3; border-left: 3px solid; padding: 6px 0 6px 8px; }
+.t-label.amber { border-color: var(--amber-mid); color: var(--amber); }
+.t-label.violet { border-color: var(--violet-mid); color: var(--violet); }
+.t-label small { display: block; font-weight: 400; color: var(--muted); font-size: 11px; }
+.t-cell { min-width: 0; font-size: 12px; line-height: 2; }
+.t-cell .cap { display: none; }
+.result .bar-row { display: grid; grid-template-columns: 40px minmax(0,1fr) 34px; align-items: center; gap: 6px; font-size: 11.5px; line-height: 1.4; }
+.result .bar-row + .bar-row { margin-top: 6px; }
+.bar-track { height: 12px; border: 1px solid var(--fg); background: #fff; position: relative; }
+.bar-fill { position: absolute; left: 0; top: 0; bottom: 0; }
+.teaser-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.5; }
+
+/* World strip */
+.world-grid { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 14px 18px; align-items: center; }
+.world-label { font-size: 12px; line-height: 1.4; }
+.world-label b { font-size: 13px; font-weight: 600; display: block; color: var(--water-dark); }
+.actions-key { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 18px; font-size: 12px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+/* Bodies */
+.bodies { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 28px; align-items: center; }
+.body-card { border: 1px solid var(--fg); background: #fff; padding: 12px 14px; box-shadow: 0 2px 2px rgba(0,0,0,.07); }
+.body-card + .body-card { margin-top: 12px; }
+.body-card .name { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+.body-card.a { border-color: var(--body-a); background: var(--body-a-tint); }
+.body-card.a .name { color: var(--body-a); }
+.body-card.a .fill { background: var(--body-a); }
+.body-card.b { border-color: var(--body-b); background: var(--body-b-tint); }
+.body-card.b .name { color: var(--body-b); }
+.body-card.b .fill { background: var(--body-b); }
+.meter { display: grid; grid-template-columns: 74px minmax(0,1fr) 36px; gap: 8px; align-items: center; font-size: 11.5px; margin-top: 4px; }
+.meter .track { height: 9px; border: 1px solid var(--fg); position: relative; background: #fff; }
+.meter .fill { position: absolute; inset: 0 auto 0 0; background: var(--fg); }
+
+/* Renderings */
+.lane-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; font-size: 12px; }
+.lane-head b { font-weight: 600; font-size: 13px; }
+.render { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; }
+.render .pane { border-left: 2px solid var(--fg); padding-left: 16px; min-width: 0; }
+.render .pane.amber { border-color: var(--amber-mid); }
+.render .pane.violet { border-color: var(--violet-mid); }
+.render .tut { font-size: 12px; line-height: 1.6; margin-bottom: 12px; }
+.render .lines { font-size: 12px; line-height: 1.9; }
+.render .lines div { white-space: nowrap; overflow-x: auto; }
+.render .reply { font-weight: 600; }
+.same { margin-top: 16px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; }
+.same span::before { content: "="; margin-right: 5px; color: var(--muted); }
+
+/* Notes */
+details.notes { max-width: var(--prose); margin: 72px auto 0; border-top: 1px solid var(--line); padding-top: 20px; font-size: 16px; line-height: 1.6; }
+details.notes summary { font-family: var(--sans); font-size: 15px; font-weight: 500; cursor: pointer; width: fit-content; }
+details.notes ul { padding-left: 22px; list-style: square outside; }
+details.notes li + li { margin-top: 8px; }
+footer.end { max-width: var(--prose); margin: 56px auto 0; font-family: var(--sans); font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
+footer.end a { color: var(--fg); }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 1150px) {
+  :root { --gutter: 48px; }
+  h1.title { font-size: 52px; }
+}
+@media (max-width: 860px) {
+  .lead { grid-template-columns: 1fr; gap: 28px; }
+  nav.toc { position: static; }
+  .bodies { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  :root { --gutter: 16px; }
+  body { font-size: 17px; }
+  header.masthead { padding: 36px 0 28px; }
+  h1.title { font-size: 36px; }
+  .subtitle { font-size: 18px; }
+  figure.fig figcaption.tldr { font-size: 18px; }
+  h2 { font-size: 25px; }
+  main { margin-top: 48px; }
+  .frame { padding: 14px; font-size: 12px; }
+  .render { grid-template-columns: 1fr; }
+  .t-world { grid-template-columns: 1fr; }
+  .t-grid { grid-template-columns: 1fr; gap: 8px; }
+  .t-head { display: none; }
+  .t-label { margin-top: 10px; }
+  .t-cell .cap { display: block; font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .world-grid { grid-template-columns: 1fr; gap: 6px; }
+  .world-grid .world-label { margin-top: 10px; }
+  blockquote.pull { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="crumbs"><a href="/">arunrl.com</a> <span aria-hidden="true">/</span> planarity</div>
+
+<header class="masthead">
+  <h1 class="title">What Would an AI Have to Unlearn in a Different World?</h1>
+  <p class="subtitle">An early experiment on the assumptions language models carry into unfamiliar environments</p>
+  <div class="byline">
+    <span class="who">Arun Rajagopal</span>
+    <span class="meta">October 14, 2026 · Research note · Water-v1</span>
+    <a class="code-link" href="https://github.com/arun-seran/planarity">Code on GitHub ↗</a>
+  </div>
+</header>
+
+<div class="lead">
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#world"><span class="num">1.</span>Change the world</a></li>
+      <li><a href="#words"><span class="num">2.</span>Change only the words</a></li>
+      <li><a href="#results"><span class="num">3.</span>What happened</a></li>
+      <li><a href="#surprise"><span class="num">4.</span>The surprise</a></li>
+      <li><a href="#inside"><span class="num">5.</span>Beliefs or actions?</a></li>
+      <li><a href="#why"><span class="num">6.</span>Why this matters</a></li>
+      <li><a href="#next"><span class="num">7.</span>What comes next</a></li>
+      <li><a href="#notes"><span class="num">·</span>Notes and limits</a></li>
+    </ol>
+    <p class="toc-code"><a href="https://github.com/arun-seran/planarity">Code ↗</a></p>
+  </nav>
+
+  <figure class="fig" style="margin:0" aria-labelledby="teaser-cap">
+    <div class="frame">
+      <div class="t-world">
+        <div class="t-world-text"><b>One world, one hidden rule</b>The valve that supplies water stays the same for the whole episode. Under this rule, a body that repeats well and switches badly comes out ahead.</div>
+        <svg class="chart" id="t-strip" role="img" aria-label="Valve 2 is active in every cycle"></svg>
+      </div>
+      <div class="t-grid">
+        <div class="t-head"></div>
+        <div class="t-head">what the model reads</div>
+        <div class="t-head">learning this world · 64 episodes</div>
+        <div class="t-head">when the rule flips back · never trained there</div>
+
+        <div class="t-label amber">Familiar words<small>Named</small></div>
+        <div class="t-cell"><span class="cap">what the model reads</span><span class="tok amber">inspect</span>: <span class="tok amber">valve</span> 2<br>last <span class="tok amber">open</span> 2 ok</div>
+        <div class="t-cell"><span class="cap">learning this world · 64 episodes</span><svg class="chart" id="t-spark-named" role="img" aria-label="Familiar words: score rises from -0.22 to 0.34 and 0.23"></svg></div>
+        <div class="t-cell"><span class="cap">when the rule flips back · never trained there</span><div class="result" id="teaser-named"></div></div>
+
+        <div class="t-label violet">Invented words<small>Masked</small></div>
+        <div class="t-cell"><span class="cap">what the model reads</span><span class="tok violet">lom</span>: <span class="tok violet">unit</span> 2<br>last <span class="tok violet">kel</span> 2 ok</div>
+        <div class="t-cell"><span class="cap">learning this world · 64 episodes</span><svg class="chart" id="t-spark-masked" role="img" aria-label="Invented words: score rises to 0.92 and 0.90"></svg></div>
+        <div class="t-cell"><span class="cap">when the rule flips back · never trained there</span><div class="result" id="teaser-masked"></div></div>
+      </div>
+      <div class="teaser-foot">Same model (Qwen3.6-35B-A3B), same world, same actions. Only the words differ. Two training runs per row.<br>Score: 0 = random actions · 1 = a controller that knows the rule.</div>
+    </div>
+    <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I built a simulated canal whose hidden rule makes a body that is good at repeating, and bad at switching, come out ahead. Then I trained one language model to act there, with the world described either in familiar words or in invented ones. With invented words, the model reached about 0.9 of a rule-aware controller within 64 episodes, and it kept that level when the rule flipped back. With familiar words, it reached 0.23 to 0.34, and its predictions about the canal shifted in a way that was wrong in the other world. Six short runs make this a lead, not yet a finding.</figcaption>
+  </figure>
+</div>
+
+<main>
+
+<section class="chapter" id="intro">
+  <p>What if there were a world where tendencies associated with neurodivergence, often treated as limitations in our present environments, became valuable capabilities? Imagine a world where repeating an action with great consistency matters more than switching quickly between tasks. How would we recognise ability there?</p>
+  <p>Now place an AI agent in that world. The agent learned from text written in <em>our</em> world, and that text carries our habits and assumptions about how things work. If the new world rewards different behaviour, can the agent learn to thrive there? What would it have to reconsider, learn, or unlearn?</p>
+  <p>That question led me to build <strong>Inverted-Utility World</strong>. The project changes the rules of a simulated environment and then studies how a language model adapts. This note covers the first small experiment.</p>
+</section>
+
+<section class="chapter" id="world">
+  <h2><a class="hash" href="#world" aria-label="Link to this section">#</a>Change the world</h2>
+  <p>How useful a capability is depends partly on where you use it. To make that measurable, I built a toy world called <strong>Water-v1</strong>. A settlement gets its water through one of four valves. In each cycle the agent may inspect, which shows the active valve, and then it must commit: open one valve, or rest. Water flows only if the opened valve is the active one <em>and</em> the agent's body carries out the command.</p>
+  <p>One hidden rule decides what the active valve does after each cycle, and the agent is never told the rule.</p>
+
+  <figure class="fig" aria-labelledby="fig1-cap">
+    <div class="frame">
+      <div class="fig-title"><span>Which valve is active, cycle by cycle</span>
+        <span class="seg" role="group" aria-label="Show the plan of a controller that knows the rule">
+          <button type="button" aria-pressed="false" data-plan="off">valves only</button>
+          <button type="button" aria-pressed="true" data-plan="on">+ rule-aware plan</button>
+        </span>
+      </div>
+      <div class="world-grid">
+        <div class="world-label"><b>Changing world</b>q = 0 · the active valve is redrawn at random after every cycle</div>
+        <div><svg class="chart" id="strip-changing" role="img" aria-label="Changing world: the active valve differs from cycle to cycle"></svg></div>
+        <div class="world-label"><b>Stable world</b>q = 1 · one valve stays active for the whole episode</div>
+        <div><svg class="chart" id="strip-stable" role="img" aria-label="Stable world: the same valve is active in every cycle"></svg></div>
+      </div>
+      <div class="actions-key">
+        <span><span class="chip water">2</span> active valve</span>
+        <span><span class="chip teal">0</span> inspect · 1 energy</span>
+        <span><span class="chip">1–4</span> open a valve · 1 energy</span>
+        <span><span class="chip">5</span> rest · free</span>
+        <span><b style="color:var(--teal)">0</b><b> → 2</b> = inspect, then open valve 2</span>
+        <span>score: +1 per litre, −0.05 per energy</span>
+      </div>
+    </div>
+    <figcaption id="fig1-cap"><span class="fignum">Figure 1.</span>The same canal under two rules. Blue marks the active valve. A controller that knows the rule inspects every cycle in the changing world. In the stable world it inspects once and then repeats the same command. The valve sequence shown is an example.</figcaption>
+  </figure>
+
+  <p>The agent controls one of two <em>synthetic</em> bodies. Their abilities never change; only the world does. Body A almost always manages to repeat a command and rarely manages to switch. Body B is steady at both.</p>
+
+  <figure class="fig" aria-labelledby="fig2-cap">
+    <div class="frame">
+      <div class="bodies">
+        <div>
+          <div class="body-card a">
+            <div class="name">Body A</div>
+            <div class="meter"><span>repeat</span><span class="track"><span class="fill" style="width:98%"></span></span><span>98%</span></div>
+            <div class="meter"><span>switch</span><span class="track"><span class="fill" style="width:10%"></span></span><span>10%</span></div>
+          </div>
+          <div class="body-card b">
+            <div class="name">Body B</div>
+            <div class="meter"><span>repeat</span><span class="track"><span class="fill" style="width:75%"></span></span><span>75%</span></div>
+            <div class="meter"><span>switch</span><span class="track"><span class="fill" style="width:75%"></span></span><span>75%</span></div>
+          </div>
+        </div>
+        <div><svg class="chart" id="reversal" role="img" aria-label="Expected score of a rule-aware controller. Changing world: A 21.78, B 65.00. Stable world: A 92.07, B 69.95."></svg></div>
+      </div>
+    </div>
+    <figcaption id="fig2-cap"><span class="fignum">Figure 2.</span>Left: how often each body carries out a repeated or a changed command. Right: the exact expected score of a controller that knows the world's rule. Filled dots mark the better body in each world. The ranking reverses, and neither body changed.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <p>I <strong>designed</strong> this reversal into the simulator. It shows what follows from the chosen rules. It is not a theory about human abilities. The bodies are mathematical profiles, not representations of autistic or other neurodivergent people, and human worth is not measured by task output.</p>
+  </div>
+</section>
+
+<section class="chapter" id="words">
+  <h2><a class="hash" href="#words" aria-label="Link to this section">#</a>Change only the words</h2>
+  <p>A language model does not enter a task empty-handed. Words like <em>valve</em>, <em>inspect</em> and <em>open</em> bring associations from its training text, and those associations may set expectations that a strange world does not meet. So I described the <strong>same world</strong> to the model in two ways.</p>
+
+  <figure class="fig" aria-labelledby="fig3-cap">
+    <div class="frame">
+      <div class="render">
+        <div class="pane amber">
+          <div class="lane-head"><b>Named</b><span>familiar words</span></div>
+          <div class="tut">You operate one body at a <span class="tok amber">canal</span> with four <span class="tok amber">valves</span>… First you may <span class="tok amber">inspect</span>, at most once. Then you must commit: <span class="tok amber">open</span> one <span class="tok amber">valve</span>, or <span class="tok amber">take a break</span>.</div>
+          <div class="lines">
+            <div>1 <span class="tok amber">water</span> 0 energy 200 <span class="tok amber">burden</span> 0 last none | 0-5&gt;<span class="reply">0</span></div>
+            <div><span class="tok amber">inspect</span>: <span class="tok amber">valve</span> 2 energy 199 | 1-5&gt;<span class="reply">2</span></div>
+            <div>2 <span class="tok amber">water</span> 0 energy 198 <span class="tok amber">burden</span> 0 last <span class="tok amber">open</span> 2 fail | 0-5&gt;<span class="reply">2</span></div>
+            <div>3 <span class="tok amber">water</span> 1 energy 197 <span class="tok amber">burden</span> 0 last <span class="tok amber">open</span> 2 ok | 0-5&gt;<span class="reply">2</span></div>
+          </div>
+        </div>
+        <div class="pane violet">
+          <div class="lane-head"><b>Masked</b><span>invented labels</span></div>
+          <div class="tut">You operate one body at a <span class="tok violet">system</span> with four <span class="tok violet">units</span>… First you may <span class="tok violet">lom</span>, at most once. Then you must commit: <span class="tok violet">kel</span> one <span class="tok violet">unit</span>, or <span class="tok violet">dax</span>.</div>
+          <div class="lines">
+            <div>1 <span class="tok violet">tib</span> 0 energy 200 <span class="tok violet">pim</span> 0 last none | 0-5&gt;<span class="reply">0</span></div>
+            <div><span class="tok violet">lom</span>: <span class="tok violet">unit</span> 2 energy 199 | 1-5&gt;<span class="reply">2</span></div>
+            <div>2 <span class="tok violet">tib</span> 0 energy 198 <span class="tok violet">pim</span> 0 last <span class="tok violet">kel</span> 2 fail | 0-5&gt;<span class="reply">2</span></div>
+            <div>3 <span class="tok violet">tib</span> 1 energy 197 <span class="tok violet">pim</span> 0 last <span class="tok violet">kel</span> 2 ok | 0-5&gt;<span class="reply">2</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="same"><span>physics</span><span>action digits</span><span>costs</span><span>information per line</span><span>tutorial length</span></div>
+    </div>
+    <figcaption id="fig3-cap"><span class="fignum">Figure 3.</span>The opening of one stable-world episode as the model sees it. Bold digits are the model's replies. Only the highlighted words differ. Neither tutorial says whether the active valve keeps changing or stays fixed. Each Masked run used a different assignment of labels to roles.</figcaption>
+  </figure>
+
+  <p>I trained the same base model, <strong>Qwen3.6-35B-A3B</strong>, with reinforcement learning in each version. It had to learn from the consequences of its own actions. Training updated a small LoRA adapter and left the original weights frozen. The question was simple: <strong>does familiar language help the model learn this world, or do its existing associations slow it down?</strong></p>
+</section>
+
+<section class="chapter" id="results">
+  <h2><a class="hash" href="#results" aria-label="Link to this section">#</a>What happened</h2>
+  <p>I ran six short training runs of 64 episodes each. Four trained in the stable world, two per vocabulary. The other two trained in the changing world, one per vocabulary. Every run was scored at the start, after 32 episodes and after 64, in both worlds.</p>
+
+  <figure class="fig" id="fig4" aria-labelledby="fig4-cap">
+    <div class="frame">
+      <div class="fig-title"><span id="fig4-title">Score in the stable world</span>
+        <span class="seg" role="group" aria-label="World the score is measured in">
+          <button type="button" aria-pressed="true" data-world="stable">scored in: stable</button>
+          <button type="button" aria-pressed="false" data-world="changing">scored in: changing</button>
+        </span>
+      </div>
+      <div class="fig-sub" id="fig4-sub">The four runs that trained here. The two changing-world runs are shown in grey.</div>
+      <svg class="chart" id="curves" role="img" aria-label="Learning curves"></svg>
+      <div class="legend" id="curves-legend"></div>
+    </div>
+    <figcaption id="fig4-cap"><span class="fignum">Figure 4.</span>Normalised score per run, averaged over both bodies. 0 is random actions and 1 is a controller that knows the rule. Each point comes from four episodes per world. Switch the toggle to see how the same models did in the world they did not train in.</figcaption>
+  </figure>
+
+  <p>In the stable world, both Masked runs reached <strong>0.92 and 0.90</strong>. One of them was already at 0.90 after 32 episodes. The Named runs ended at <strong>0.34 and 0.23</strong>. Before training, the model scored below random in this world in both versions, so whatever it brought to the task worked against it at first.</p>
+  <p>The world was the same. Only the description changed. That alone does not show that pretrained beliefs caused the gap. Some labels may be easier for the model to process, and one Masked labelling started higher before any training (0.05 against −0.22). The next experiments need to test both alternatives.</p>
+
+  <h3>A second view: learning cost</h3>
+  <p>Final scores show where a run ended. <strong>Learning cost</strong> counts how much reward a run missed along the way, compared with the rule-aware controller, summed over all 64 training episodes. Lower is better. Comparing the cost across both worlds removes how hard each world is on its own, and leaves the extra cost tied to the words.</p>
+
+  <figure class="fig" aria-labelledby="fig5-cap">
+    <div class="frame">
+      <div class="fig-title"><span>Learning cost over 64 episodes</span></div>
+      <svg class="chart" id="cost" role="img" aria-label="Learning cost. Familiar words: changing world 1,941, stable world 3,828. Invented words: changing world 2,012, stable world 2,447. Extra cost of the stable world: 1,887 versus 435, a difference of 1,452."></svg>
+    </div>
+    <figcaption id="fig5-cap"><span class="fignum">Figure 5.</span>Bars are cell means and dots are single runs. Moving to the stable world adds 1,887 to the cost with familiar words and 435 with invented words. The difference, <strong>+1,452</strong>, is the extra learning cost associated with familiar words.</figcaption>
+  </figure>
+
+  <p>Both stable-world seeds point the same way (+770 and +2,134). The changing-world cells have <strong>one run each</strong>, though, so the uncertainty estimate only covers spread in the stable-world runs. Treat +1,452 as a preliminary estimate and not as a confirmed measure of prior conflict.</p>
+</section>
+
+<section class="chapter" id="surprise">
+  <h2><a class="hash" href="#surprise" aria-label="Link to this section">#</a>The surprise: it also worked when the world changed back</h2>
+  <p>Every checkpoint was also scored in the changing world, where the stable-world models never trained. The Masked models from the stable world scored <strong>0.94 and 0.95</strong> there. The Named models scored 0.62 and 0.19. You can see this by switching <a href="#fig4" data-goto="changing">Figure 4 to the changing world</a>.</p>
+  <p>The two models trained in the changing world finished at 0.32. That comparison needs care. Those runs barely moved in 64 episodes (Named went from 0.18 to 0.32, Masked from 0.36 to 0.32), so "better than training there" mostly means that training there had not got going yet.</p>
+  <p>One possibility is that the Masked models learned a flexible way to use observations, like checking the current valve and acting on what they saw, which works under both rules. I don't know yet whether that is what happened. Each score check used only four episodes per world, so the transfer result needs larger evaluations and direct tests of the models' choices. Still, it is the result that most changed what I want to study next: <strong>how an agent learns a rule it can reuse when conditions change</strong>, as much as what it has to discard.</p>
+</section>
+
+<section class="chapter" id="inside">
+  <h2><a class="hash" href="#inside" aria-label="Link to this section">#</a>Did the model change what it believed, or how it acted?</h2>
+  <p>To compare like with like, I took two checkpoints with the same stable-world score: Named after 64 episodes (0.34) and Masked after 32 (0.33). I replayed the same held-out episodes through each, with the adapter switched off and on, and read off two things: what the model expected the next active valve to be, and how often it chose to inspect.</p>
+
+  <figure class="fig" aria-labelledby="fig6-cap">
+    <div class="frame">
+      <div class="fig-title"><span>Same score, different change</span></div>
+      <svg class="chart" id="inside-chart" role="img" aria-label="Next-valve error, stable world: Named 0.17 to 0.07, Masked 0.10 to 0.10. Changing world: Named 0.48 to 0.81, Masked 0.49 to 0.45. Chance to inspect in the stable world: Named 0.051 to 0.053, Masked 0.050 to 0.064."></svg>
+      <div class="legend"><span><svg width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#fff" stroke="#000"/><line x1="10" y1="5" x2="24" y2="5" stroke="#000"/><circle cx="29" cy="5" r="4" fill="#000"/></svg>adapter off → on</span><span style="color:var(--amber)"><span class="sw"></span><span style="color:var(--fg)">Named, 64 episodes</span></span><span style="color:var(--violet)"><span class="sw"></span><span style="color:var(--fg)">Masked, 32 episodes</span></span></div>
+    </div>
+    <figcaption id="fig6-cap"><span class="fignum">Figure 6.</span>Next-valve error is the distance between the model's guess for the next active valve and the world's true rule; lower is closer. Named moved its guesses toward "the valve stays", including in the changing world where that is wrong. Masked left its guesses alone and inspected more often.</figcaption>
+  </figure>
+
+  <p>With familiar words, the model's <strong>predictions</strong> changed. It got better at predicting that a valve stays active in the stable world, and it carried that expectation into the changing world, where it is wrong. With invented words, its <strong>actions</strong> changed more visibly: it became more likely to inspect, while its predictions barely moved.</p>
+  <p>These come from one small inspection, so they are not proof that one model revised a belief while the other found a general strategy. Predictions read out of a model are still model outputs, not direct access to what it understands. And because training only added a LoRA adapter, this experiment cannot show that the model erased its original knowledge. It shows that training changed behaviour and some measured predictions. Whether that counts as <em>unlearning</em> needs a more careful test.</p>
+</section>
+
+<section class="chapter" id="why">
+  <h2><a class="hash" href="#why" aria-label="Link to this section">#</a>Why this matters for AI safety and alignment</h2>
+  <p>As AI agents take on longer tasks, they will meet environments where the familiar reading of an action is wrong, incomplete, or no longer useful. What an agent knows can help it act quickly. It can also shape what the agent notices, how it reads feedback, and which strategies it thinks are worth trying. A few questions follow for agents that must stay reliable in unfamiliar conditions:</p>
+  <ul>
+    <li><strong>Recognition:</strong> can an agent detect when its learned assumptions do not fit the environment it is in?</li>
+    <li><strong>Adaptation:</strong> can it learn new rules from feedback without carrying a mistaken rule into other situations?</li>
+    <li><strong>Transfer:</strong> does it learn a narrow behaviour that works once, or a way of acting that survives a change in conditions?</li>
+    <li><strong>Interpretability:</strong> when behaviour improves, can we tell whether its predictions changed, its strategy changed, or both?</li>
+  </ul>
+  <p>This experiment does not answer those questions. It gives me a controlled place to ask them.</p>
+</section>
+
+<section class="chapter" id="next">
+  <h2><a class="hash" href="#next" aria-label="Link to this section">#</a>What comes next</h2>
+  <p>The first priority is replication: all four conditions across more seeds, and many more scoring episodes per checkpoint. Before I attribute any difference to prior associations, I also need an interface test showing that the model understands the familiar and the invented controls equally well.</p>
+  <p>After that, I want to vary how often the active valve changes, add worlds with less obvious links between actions and outcomes, and compare familiar words, invented labels and explicitly stated rules.</p>
+  <blockquote class="pull">When an AI enters a world that differs from the one described by its training data, what must change inside the model for it to understand the new world and act well in it?</blockquote>
+  <p>This first pilot gives a reason to keep asking. It is not yet an answer.</p>
+</section>
+
+<details class="notes" id="notes">
+  <summary>Experiment notes and limits</summary>
+  <ul>
+    <li><strong>Dates:</strong> experiment run on October 13–14, 2026. This note reports what ran, not everything in the original specification.</li>
+    <li><strong>Model:</strong> <code>Qwen/Qwen3.6-35B-A3B</code> in bf16 with a rank-32 LoRA adapter on every linear layer: attention, linear attention and the shared-expert MLP. The base weights and the 256 routed experts stayed frozen.</li>
+    <li><strong>Training:</strong> six runs of 64 episodes each (8 updates of 8 episodes) on one H200 GPU; policy-gradient updates over legal actions only; one learning rate, 4e-5, chosen for the budget.</li>
+    <li><strong>Scoring:</strong> checked at 0, 32 and 64 episodes on two seeds × two bodies per world, so four episodes per world per checkpoint. The score is normalised per body and world, against random actions (0) and a known-rule planner (1), then averaged over the two bodies.</li>
+    <li><strong>Runs:</strong> stable world, two seeds per vocabulary; changing world, one seed per vocabulary. Each Masked seed used a different label mapping.</li>
+    <li><strong>Learning cost:</strong> +1,452 comes from two stable-world runs and one changing-world run per vocabulary. The partial bootstrap interval [770, 2,134] leaves out uncertainty in the changing-world cells and is not a full 95% confidence interval.</li>
+    <li><strong>Inspection:</strong> one matched-score pair of adapters, replayed on eight held-out episodes per world in which one action in four is random. An earlier check on the final seed-0 adapters, using easier replays, pointed the same way. Both need replication and causal tests.</li>
+    <li><strong>Not yet done:</strong> interface-understanding quiz, sealed test, controls for labelling and world rules, and a larger multi-seed study. No run met the stricter sustained-adaptation criterion (a score of at least 0.9 on three checks in a row).</li>
+    <li><strong>Code and write-ups:</strong> the simulator, training loop, analysis and the run scripts are at <a href="https://github.com/arun-seran/planarity">github.com/arun-seran/planarity</a>. The full results are in <a href="https://github.com/arun-seran/planarity/blob/main/docs/experiment-results.md"><code>docs/experiment-results.md</code></a>.</li>
+    <li><strong>Scope:</strong> one model, one training setup, one deliberately built world. Nothing here supports claims about neurodivergent cognition, human value, or a general failure of deployed AI agents.</li>
+  </ul>
+</details>
+
+</main>
+
+<footer class="end">
+  Arun Rajagopal · <a href="/">arunrl.com</a>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var C = {
+    fg: "#000", muted: "#787168", line: "#d0ccc8", grey: "#a8a29e",
+    amber: "#d97706", amberMid: "#f59e0b", amberTint: "#fef3c7",
+    violet: "#7c3aed", violetMid: "#8b5cf6", violetTint: "#ede9fe",
+    water: "#3ca3c8", waterDark: "#24677f", teal: "#0d9488",
+    bodyA: "#c45f84", bodyB: "#5b8a3a"
+  };
+
+  function el(name, attrs, parent, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+  function narrow() { return window.matchMedia("(max-width: 640px)").matches; }
+
+  /* Teaser bars */
+  function bars(id, color, tint, values) {
+    var host = document.getElementById(id);
+    values.forEach(function (v, i) {
+      var row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = '<span>run ' + (i + 1) + '</span><span class="bar-track"><span class="bar-fill" style="width:' +
+        Math.max(0, v) * 100 + '%;background:' + tint + ';border-right:2px solid ' + color + '"></span></span><span>' + v.toFixed(2) + '</span>';
+      host.appendChild(row);
+    });
+  }
+  bars("teaser-named", C.amberMid, C.amberTint, [0.62, 0.19]);
+  bars("teaser-masked", C.violetMid, C.violetTint, [0.94, 0.95]);
+
+  /* Teaser: one-world strip and learning sparklines */
+  (function () {
+    var svg = document.getElementById("t-strip");
+    var n = 8, cw = 36, W = n * cw, rowH = 11, top = 12;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + (top + 4 * rowH + 2));
+    for (var i = 0; i < n; i++) {
+      el("text", { x: i * cw + cw / 2, y: 8, "text-anchor": "middle", "font-size": 8, fill: C.muted }, svg, "c" + (i + 1));
+      for (var v = 1; v <= 4; v++) {
+        var on = v === 2;
+        el("rect", { x: i * cw + 5, y: top + (v - 1) * rowH, width: cw - 10, height: rowH - 3,
+          fill: on ? C.water : "#fff", stroke: on ? C.waterDark : C.fg, "stroke-width": 1 }, svg);
+      }
+    }
+  })();
+  function spark(id, color, runs, endLabel) {
+    var svg = document.getElementById(id);
+    var W = 240, H = 78, L = 18, R = 78, T = 6, B = 14;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var x = function (ep) { return L + ep / 64 * (W - L - R); };
+    var y = function (v) { return T + (1 - v) / 1.3 * (H - T - B); };
+    [[1, "1"], [0, "0"]].forEach(function (t) {
+      el("line", { x1: L, x2: W - R, y1: y(t[0]), y2: y(t[0]), stroke: C.fg, "stroke-width": .75, "stroke-dasharray": "2 3" }, svg);
+      el("text", { x: L - 5, y: y(t[0]) + 3, "text-anchor": "end", "font-size": 9, fill: C.muted }, svg, t[1]);
+    });
+    el("text", { x: L, y: H - 2, "font-size": 8.5, fill: C.muted }, svg, "0");
+    el("text", { x: W - R, y: H - 2, "text-anchor": "end", "font-size": 8.5, fill: C.muted }, svg, "64");
+    runs.forEach(function (v, k) {
+      var d = v.map(function (val, i) { return (i ? "L" : "M") + x([0, 32, 64][i]) + " " + y(val); }).join(" ");
+      el("path", { d: d, fill: "none", stroke: color, "stroke-width": 2.25, "stroke-dasharray": k ? "5 3" : "" }, svg);
+    });
+    var endY = runs.reduce(function (a, v) { return a + y(v[2]); }, 0) / runs.length;
+    el("text", { x: W - R + 6, y: endY + 4, "font-size": 11, "font-weight": 600, fill: color }, svg, endLabel);
+  }
+  spark("t-spark-named", C.amber, [[-0.224, -0.213, 0.338], [-0.224, -0.055, 0.233]], "0.34 · 0.23");
+  spark("t-spark-masked", C.violet, [[-0.212, 0.333, 0.917], [0.048, 0.898, 0.902]], "0.92 · 0.90");
+
+  /* Figure 1: valve strips */
+  var changingSeq = [2, 2, 4, 4, 4, 1, 3, 1, 2, 4, 3, 3];
+  var showPlan = true;
+  function strip(id, seq, stable) {
+    var svg = document.getElementById(id);
+    clear(svg);
+    var n = seq.length, cw = 52, W = n * cw, rowH = 13, top = 16;
+    var H = top + 4 * rowH + (showPlan ? 30 : 6);
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    for (var i = 0; i < n; i++) {
+      var x = i * cw;
+      el("text", { x: x + cw / 2, y: 10, "text-anchor": "middle", "font-size": 9, fill: C.muted }, svg, "c" + (i + 1));
+      for (var v = 1; v <= 4; v++) {
+        var y = top + (v - 1) * rowH;
+        var on = seq[i] === v;
+        el("rect", { x: x + 8, y: y, width: cw - 16, height: rowH - 3,
+          fill: on ? C.water : "#fff", stroke: on ? C.waterDark : C.fg, "stroke-width": 1 }, svg);
+        el("text", { x: x + cw / 2, y: y + rowH - 5.5, "text-anchor": "middle", "font-size": 8,
+          fill: on ? "#fff" : C.muted }, svg, String(v));
+      }
+      if (showPlan) {
+        var t = el("text", { x: x + cw / 2, y: top + 4 * rowH + 16, "text-anchor": "middle", "font-size": 10,
+          "font-weight": 600 }, svg);
+        if (!stable || i === 0) {
+          el("tspan", { fill: C.teal }, t, "0");
+          el("tspan", { fill: C.fg }, t, " → " + seq[i]);
+        } else {
+          el("tspan", { fill: C.fg }, t, String(seq[i]));
+        }
+      }
+    }
+    if (showPlan) {
+      el("line", { x1: 0, x2: W, y1: top + 4 * rowH + 3, y2: top + 4 * rowH + 3, stroke: C.line }, svg);
+    }
+  }
+  function drawStrips() {
+    strip("strip-changing", changingSeq, false);
+    strip("strip-stable", changingSeq.map(function () { return 2; }), true);
+  }
+  drawStrips();
+  document.querySelectorAll("[data-plan]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      showPlan = b.getAttribute("data-plan") === "on";
+      document.querySelectorAll("[data-plan]").forEach(function (x) {
+        x.setAttribute("aria-pressed", String(x === b));
+      });
+      drawStrips();
+    });
+  });
+
+  /* Figure 2: reversal slope chart */
+  (function () {
+    var svg = document.getElementById("reversal");
+    var W = 520, H = 260, L = 70, R = 120, T = 24, B = 40;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var y = function (v) { return T + (100 - v) / 100 * (H - T - B); };
+    var xs = [L + 90, W - R];
+    [0, 25, 50, 75, 100].forEach(function (t) {
+      el("line", { x1: L, x2: W - R + 20, y1: y(t), y2: y(t), stroke: C.line, "stroke-width": 1 }, svg);
+      el("text", { x: L - 10, y: y(t) + 4, "text-anchor": "end", "font-size": 11, fill: C.muted }, svg, t);
+    });
+    el("text", { x: xs[0], y: H - 14, "text-anchor": "middle", "font-size": 12 }, svg, "changing world");
+    el("text", { x: xs[1], y: H - 14, "text-anchor": "middle", "font-size": 12 }, svg, "stable world");
+    el("text", { x: 12, y: T - 8, "font-size": 11, fill: C.muted }, svg, "expected score");
+    var series = [
+      { name: "Body A", v: [21.78, 92.07], color: C.bodyA },
+      { name: "Body B", v: [65.00, 69.95], color: C.bodyB }
+    ];
+    var best = [1, 0];  // index of the better body in each world
+    el("text", { x: xs[0], y: y(65.00) - 16, "text-anchor": "middle", "font-size": 10.5, fill: C.bodyB, "font-weight": 600 }, svg, "B ahead");
+    el("text", { x: xs[1], y: y(92.07) - 16, "text-anchor": "middle", "font-size": 10.5, fill: C.bodyA, "font-weight": 600 }, svg, "A ahead");
+    series.forEach(function (s, si) {
+      el("line", { x1: xs[0], y1: y(s.v[0]), x2: xs[1], y2: y(s.v[1]), stroke: s.color, "stroke-width": 3 }, svg);
+      s.v.forEach(function (v, i) {
+        var win = best[i] === si;
+        el("circle", { cx: xs[i], cy: y(v), r: win ? 7 : 5, fill: win ? s.color : "#fff", stroke: s.color, "stroke-width": 2 }, svg);
+        el("text", { x: xs[i] + (i ? 14 : -14), y: y(v) + 4, "text-anchor": i ? "start" : "end", "font-size": 12,
+          "font-weight": 600, fill: s.color }, svg, v.toFixed(2));
+      });
+      el("text", { x: xs[1] + 64, y: y(s.v[1]) + 4, "font-size": 12, "font-weight": 600, fill: s.color }, svg, s.name);
+    });
+  })();
+
+  /* Figure 4: learning curves */
+  var runs = [
+    { id: "Named · run 1", color: C.amber, dash: "", trained: "stable", stable: [-0.224, -0.213, 0.338], changing: [0.180, 0.112, 0.6247] },
+    { id: "Named · run 2", color: C.amber, dash: "6 4", trained: "stable", stable: [-0.224, -0.055, 0.233], changing: [0.180, 0.117, 0.187] },
+    { id: "Masked · run 1", color: C.violet, dash: "", trained: "stable", stable: [-0.212, 0.333, 0.917], changing: [0.356, 0.678, 0.941] },
+    { id: "Masked · run 2", color: C.violet, dash: "6 4", trained: "stable", stable: [0.048, 0.898, 0.902], changing: [0.155, 0.902, 0.954] },
+    { id: "Named · changing-world run", color: C.grey, dash: "", trained: "changing", stable: [-0.224, -0.232, -0.200], changing: [0.180, 0.348, 0.322] },
+    { id: "Masked · changing-world run", color: C.grey, dash: "2 3", trained: "changing", stable: [-0.212, -0.220, -0.220], changing: [0.356, 0.316, 0.316] }
+  ];
+  var world = "stable";
+  function drawCurves() {
+    var svg = document.getElementById("curves");
+    clear(svg);
+    var small = narrow();
+    var W = small ? 360 : 760, H = small ? 300 : 360, L = 44, R = small ? 16 : 235, T = 18, B = 40;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var ymin = -0.4, ymax = 1.05;
+    var x = function (ep) { return L + ep / 64 * (W - L - R); };
+    var y = function (v) { return T + (ymax - v) / (ymax - ymin) * (H - T - B); };
+    [-0.25, 0, 0.25, 0.5, 0.75, 1].forEach(function (t) {
+      el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: t === 0 || t === 1 ? C.fg : C.line,
+        "stroke-width": 1, "stroke-dasharray": t === 0 || t === 1 ? "3 3" : "" }, svg);
+      el("text", { x: L - 8, y: y(t) + 4, "text-anchor": "end", "font-size": 11, fill: C.muted }, svg, t.toFixed(2).replace(/\.?0+$/, "") || "0");
+    });
+    el("text", { x: W - R - 4, y: y(1) - 6, "text-anchor": "end", "font-size": 10, fill: C.muted }, svg, "knows the rule");
+    el("text", { x: W - R - 4, y: y(0) - 6, "text-anchor": "end", "font-size": 10, fill: C.muted }, svg, "random");
+    [0, 32, 64].forEach(function (ep) {
+      el("text", { x: x(ep), y: H - 16, "text-anchor": "middle", "font-size": 11 }, svg, ep);
+    });
+    el("text", { x: (L + W - R) / 2, y: H - 1, "text-anchor": "middle", "font-size": 11, fill: C.muted }, svg, "training episodes");
+    var ends = [];
+    runs.forEach(function (r) {
+      var v = r[world], trainedHere = r.trained === world;
+      var colorful = r.trained === "stable";
+      var stroke = r.color, op = (world === "stable" && !colorful) ? 0.9 : 1;
+      var d = v.map(function (val, i) { return (i ? "L" : "M") + x([0, 32, 64][i]) + " " + y(val); }).join(" ");
+      el("path", { d: d, fill: "none", stroke: stroke, "stroke-width": colorful ? 2.75 : 2, "stroke-dasharray": r.dash, opacity: op }, svg);
+      v.forEach(function (val, i) {
+        el("circle", { cx: x([0, 32, 64][i]), cy: y(val), r: 3.5, fill: "#fff", stroke: stroke, "stroke-width": 2, opacity: op }, svg);
+      });
+      ends.push({ r: r, y: y(v[2]), v: v[2], here: trainedHere });
+    });
+    if (!small) {
+      ends.sort(function (a, b) { return a.y - b.y; });
+      for (var i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
+      ends.forEach(function (e) {
+        el("text", { x: W - R + 10, y: e.y + 4, "font-size": 11, fill: e.r.color === C.grey ? C.muted : e.r.color,
+          "font-weight": 500 }, svg, e.v.toFixed(2) + "  " + e.r.id);
+      });
+    }
+    var legend = document.getElementById("curves-legend");
+    legend.innerHTML = "";
+    runs.forEach(function (r) {
+      var s = document.createElement("span");
+      s.innerHTML = '<span class="sw' + (r.dash ? " dash" : "") + '" style="color:' + r.color + '"></span>' + r.id;
+      legend.appendChild(s);
+    });
+    legend.style.display = small ? "flex" : "none";
+  }
+  function setWorld(w) {
+    world = w;
+    document.querySelectorAll("[data-world]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-world") === w));
+    });
+    document.getElementById("fig4-title").textContent = w === "stable" ? "Score in the stable world" : "Score in the changing world";
+    document.getElementById("fig4-sub").textContent = w === "stable"
+      ? "The four runs that trained here. The two changing-world runs are shown in grey."
+      : "Coloured runs never trained in this world. The grey runs did.";
+    drawCurves();
+  }
+  document.querySelectorAll("[data-world]").forEach(function (b) {
+    b.addEventListener("click", function () { setWorld(b.getAttribute("data-world")); });
+  });
+  document.querySelectorAll("[data-goto]").forEach(function (a) {
+    a.addEventListener("click", function () { setWorld(a.getAttribute("data-goto")); });
+  });
+  drawCurves();
+
+  /* Figure 5: learning cost */
+  function drawCost() {
+    var svg = document.getElementById("cost");
+    clear(svg);
+    var small = narrow();
+    var W = small ? 360 : 760, H = 340, L = 56, R = 16, T = 30, B = 52;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var ymax = 4200;
+    var y = function (v) { return T + (ymax - v) / ymax * (H - T - B); };
+    [0, 1000, 2000, 3000, 4000].forEach(function (t) {
+      el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), stroke: C.line }, svg);
+      el("text", { x: L - 8, y: y(t) + 4, "text-anchor": "end", "font-size": 11, fill: C.muted }, svg, t.toLocaleString("en-US"));
+    });
+    var groups = [
+      { name: "Familiar words", color: C.amberMid, dark: C.amber, tint: C.amberTint, ch: 1941, st: 3828, stRuns: [3750, 3906], chRuns: [1941], extra: 1887 },
+      { name: "Invented words", color: C.violetMid, dark: C.violet, tint: C.violetTint, ch: 2012, st: 2447, stRuns: [3051, 1843], chRuns: [2012], extra: 435 }
+    ];
+    var gw = (W - L - R) / 2, bw = Math.min(70, gw / 4.2);
+    groups.forEach(function (g, gi) {
+      var cx = L + gw * gi + gw / 2;
+      var xc = cx - bw * 0.75, xs = cx + bw * 0.75;
+      el("rect", { x: xc - bw / 2, y: y(g.ch), width: bw, height: y(0) - y(g.ch), fill: "#fff", stroke: g.color, "stroke-width": 1.5 }, svg);
+      el("rect", { x: xs - bw / 2, y: y(g.st), width: bw, height: y(0) - y(g.st), fill: g.tint, stroke: g.color, "stroke-width": 1.5 }, svg);
+      g.chRuns.forEach(function (v) { el("circle", { cx: xc, cy: y(v), r: 4, fill: g.dark }, svg); });
+      g.stRuns.forEach(function (v, i) { el("circle", { cx: xs + (i ? 9 : -9), cy: y(v), r: 4, fill: g.dark }, svg); });
+      el("text", { x: xc, y: y(0) + 15, "text-anchor": "middle", "font-size": 10.5 }, svg, "changing");
+      el("text", { x: xs, y: y(0) + 15, "text-anchor": "middle", "font-size": 10.5 }, svg, "stable");
+      el("text", { x: cx, y: H - 12, "text-anchor": "middle", "font-size": 12, "font-weight": 600, fill: g.dark }, svg, g.name);
+      el("text", { x: xc, y: y(g.ch) - 8, "text-anchor": "middle", "font-size": 11 }, svg, g.ch.toLocaleString("en-US"));
+      el("text", { x: xs, y: Math.min(y(g.st), y(Math.max.apply(null, g.stRuns))) - 8, "text-anchor": "middle", "font-size": 11 }, svg, g.st.toLocaleString("en-US"));
+      // bracket for the extra cost of the stable world
+      var bx = xs + bw / 2 + (small ? 6 : 14);
+      el("path", { d: "M" + bx + " " + y(g.ch) + " h6 V" + y(g.st) + " h-6", fill: "none", stroke: g.dark, "stroke-width": 1.5 }, svg);
+      el("line", { x1: xc + bw / 2, x2: bx, y1: y(g.ch), y2: y(g.ch), stroke: g.dark, "stroke-dasharray": "2 3" }, svg);
+      el("text", { x: bx + 10, y: (y(g.ch) + y(g.st)) / 2 + 4, "font-size": small ? 11 : 13, "font-weight": 600, fill: g.dark }, svg, "+" + g.extra.toLocaleString("en-US"));
+    });
+    el("text", { x: W - R, y: 14, "text-anchor": "end", "font-size": small ? 11 : 13, "font-weight": 600 }, svg, "1,887 − 435 = +1,452");
+  }
+  drawCost();
+
+  /* Figure 6: inside the adapters */
+  function drawInside() {
+    var svg = document.getElementById("inside-chart");
+    clear(svg);
+    var small = narrow();
+    var W = small ? 360 : 760, rowH = 34, gap = 30;
+    var labelW = small ? 0 : 210, L = labelW + 20, R = 50;
+    var panels = [
+      { title: "Next-valve error (lower is closer to the rule)", max: 0.9, ticks: [0, 0.3, 0.6, 0.9], rows: [
+        { label: "stable world", named: [0.17, 0.07], masked: [0.10, 0.10] },
+        { label: "changing world", named: [0.48, 0.81], masked: [0.49, 0.45] } ] },
+      { title: "Chance to inspect, stable world", max: 0.08, ticks: [0, 0.02, 0.04, 0.06, 0.08], rows: [
+        { label: "per cycle", named: [0.051, 0.053], masked: [0.050, 0.064] } ] }
+    ];
+    var yy = 8, parts = [];
+    panels.forEach(function (p) {
+      parts.push({ p: p, y: yy });
+      yy += 22 + p.rows.length * (rowH * 2) + gap + 16;
+    });
+    var H = yy - gap + 4;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    parts.forEach(function (part) {
+      var p = part.p, y0 = part.y;
+      var x = function (v) { return L + v / p.max * (W - L - R); };
+      el("text", { x: 0, y: y0 + 10, "font-size": 12, "font-weight": 600 }, svg, p.title);
+      var top = y0 + 24, bottom = top + p.rows.length * rowH * 2;
+      p.ticks.forEach(function (t) {
+        el("line", { x1: x(t), x2: x(t), y1: top, y2: bottom, stroke: C.line }, svg);
+        el("text", { x: x(t), y: bottom + 14, "text-anchor": "middle", "font-size": 10.5, fill: C.muted }, svg, String(t));
+      });
+      p.rows.forEach(function (r, ri) {
+        var base = top + ri * rowH * 2;
+        if (!small) el("text", { x: labelW, y: base + rowH + 4, "text-anchor": "end", "font-size": 11.5 }, svg, r.label);
+        else el("text", { x: L, y: base + 9, "font-size": 10.5, fill: C.muted }, svg, r.label);
+        [["named", C.amber, "Named"], ["masked", C.violet, "Masked"]].forEach(function (s, si) {
+          var cy = base + (si ? rowH * 1.45 : rowH * 0.62);
+          var a = r[s[0]][0], b = r[s[0]][1];
+          el("line", { x1: x(a), x2: x(b), y1: cy, y2: cy, stroke: s[1], "stroke-width": 3 }, svg);
+          el("circle", { cx: x(a), cy: cy, r: 5, fill: "#fff", stroke: s[1], "stroke-width": 2 }, svg);
+          el("circle", { cx: x(b), cy: cy, r: 5.5, fill: s[1] }, svg);
+          var right = Math.max(x(a), x(b));
+          var fmt = p.max < 1 && p.max > 0.1 ? 2 : 3;
+          el("text", { x: right + 10, y: cy + 4, "font-size": 11, fill: s[1], "font-weight": 600 }, svg,
+            a.toFixed(fmt) + " → " + b.toFixed(fmt));
+        });
+      });
+    });
+  }
+  drawInside();
+
+  var resizeTimer;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { drawCurves(); drawCost(); drawInside(); }, 120);
+  });
+})();
+</script>
+</body>
+</html>

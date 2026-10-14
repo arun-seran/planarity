@@ -80,7 +80,7 @@ value above zero means the everyday words add extra learning cost in the counter
 | Item | Value |
 |---|---|
 | Base model | Qwen/Qwen3.6-35B-A3B in bf16 on one H200 GPU |
-| Adapter | LoRA, rank 32, on the attention layers and the linear-attention layers; the experts stay frozen |
+| Adapter | LoRA, rank 32, on every linear layer: attention, linear attention and the shared-expert MLP; the 256 routed experts stay frozen |
 | Training | 8 updates per run; each update uses 4 seeds × 2 bodies = 8 episodes, so 64 episodes per run |
 | Loss | policy gradient over legal actions only, clip 0.2, one pass per update, no KL term |
 | Optimiser | AdamW, learning rate 4e-5 |
@@ -139,8 +139,8 @@ At update 0, the base model scores below random in the counterfactual world. Bod
 By update 8, the Named runs had reached 0.34 and 0.23 in the counterfactual world. Both Masked runs
 passed S = 0.9 there. Masked seed 1 was already at 0.90 at update 4.
 
-The two runs in the reference world finished where they began, at S = 0.32. Body B stayed near 0 in
-the reference world for the whole run.
+The two runs in the reference world both ended at S = 0.32. The Named run started at 0.18 and the
+Masked run at 0.36. Body B stayed near 0 in the reference world for the whole run.
 
 The spec defines adaptation speed as the number of episodes until S stays at 0.9 or more for three
 checks in a row. No run reached that within 64 episodes.
@@ -218,7 +218,7 @@ counterfactual world, −0.041 in the reference world), so the shifts there are 
 - **Training length.** Each run had 64 training episodes. The spec asks for 800.
 - **Score checks.** Each score check used 4 episodes per world. Body A in the reference world has a
   small gap between random and planner returns (20.31), so its S moves a lot between checks.
-- **Training choices.** Training used one learning rate and an adapter on the attention layers only.
+- **Training choices.** Training used one learning rate and an adapter that leaves the 256 routed experts frozen.
   We picked both to fit the budget. The spec leaves them open.
 - **Adapter checks.** We checked one adapter of each form at matched scores. The return trip used one
   episode per condition.

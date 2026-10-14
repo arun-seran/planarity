@@ -20,7 +20,7 @@ inspections, about $24 of GPU time on Runpod. Nothing here is committed to git y
   - Masked reached 0.92 and 0.90. One Masked seed was already at 0.90 after 32 episodes.
 - **Masked transferred, Named mostly did not.** Masked adapters trained in the reversed world also
   reached S ≈ 0.95 in the reference world. That is better than adapters trained in the reference
-  world itself (S ≈ 0.32, which did not improve at all).
+  world itself (S ≈ 0.32; those runs barely moved, from 0.18 and 0.36).
 - **At matched performance, the two adapters changed differently.** At equal reversed-world score
   (S ≈ 0.33):
   - The Named adapter moved its next-valve predictions toward the reversed law. It then also applied
@@ -32,7 +32,7 @@ inspections, about $24 of GPU time on Runpod. Nothing here is committed to git y
 - **Confidence.** This is a working pipeline with a consistent signal, not a finding yet:
   - 1–2 seeds per cell;
   - 4 evaluation episodes per world per point;
-  - one model, one learning rate, attention-only LoRA;
+  - one model, one learning rate, a LoRA that skips the routed experts;
   - several runbook gates skipped (§6).
 
 ---
@@ -159,7 +159,7 @@ We ran the end-to-end loop on Qwen3-0.6B with `--backend hf` on MPS. Changes:
 - **Moved to Runpod.** Same HF + PEFT code on one rented **H200 (141 GB)** at $5.29/hr.
 - **Shrunk the experiment.**
   - 8 updates × 8 episodes = **64 training episodes per run** (the spec has 800).
-  - **Attention-only LoRA**, rank 32.
+  - **LoRA on all linear layers**, rank 32: attention, linear attention and the shared-expert MLP. The 256 routed experts stay frozen.
   - **Learning rate 4e-5**, my choice and not tuned.
   - Evaluations at updates 0, 4 and 8, on 2 seeds × 2 bodies per world.
 - **Tinker can't import a LoRA.** Its SDK accepts only `tinker://` checkpoints. Weight-level
@@ -213,7 +213,7 @@ Every run used the same settings, so all six are comparable:
 | Setting | Value |
 |---|---|
 | Base model | Qwen/Qwen3.6-35B-A3B, bf16, one H200 |
-| Adapter | LoRA rank 32, attention and linear-attention projections only (no experts) |
+| Adapter | LoRA rank 32 on every linear layer (attention, linear attention, shared-expert MLP); the 256 routed experts stay frozen |
 | Training | 8 updates × (4 seeds × 2 bodies) = 64 episodes; renormalised policy-gradient loss, clip 0.2, 1 pass; KL off; batch-mean baseline; γ = 1; temperature 1 |
 | Optimiser | AdamW, lr 4e-5, β = (0.9, 0.95) |
 | Evaluation | dev seeds 0–1 × bodies A, B × both worlds, at updates 0, 4, 8; fixed evaluation salt, so every run is evaluated on the same episodes |
@@ -314,8 +314,8 @@ Each insight is marked with how much it can bear.
    conflict" story. But belief answers are outputs to assess, not evidence of mechanism, and this
    is one adapter each.
 
-5. **Training in the reference world did nothing in 64 episodes.** *(Two runs.)* Both reference-world
-   runs ended where they started (S ≈ 0.32), with body B near 0 throughout. Two consequences:
+5. **Training in the reference world barely moved in 64 episodes.** *(Two runs.)* Both reference-world
+   runs ended at S ≈ 0.32: Named from 0.18, Masked from 0.36. Body B stayed near 0 throughout. Two consequences:
    - In this design, the reference cells' learning cost mostly reflects **starting competence**, not
      learning speed.
    - Reference-world learning is very slow at this scale. The spec's 800-episode runs, or a per-body
@@ -370,7 +370,7 @@ Each insight is marked with how much it can bear.
   No full interval for Δ_prior.
 - **Training length.** 64 episodes per run against the spec's 800. Adaptation speed is censored
   everywhere, and the reference-world runs may simply not have started learning.
-- **Choices not in the spec.** Attention-only LoRA (Tinker probably adapts the experts too), a single
+- **Choices not in the spec.** A LoRA that skips the 256 routed experts (Tinker probably adapts them too), a single
   learning rate picked for budget, and the renormalised loss.
 - **Skipped runbook gates.** Stage-3 interface quiz (both renderings ≥ 95%), stage-4 frozen-model
   check, notebook and middle-loop stages, and the sealed test. In particular, the quiz would show
@@ -421,7 +421,7 @@ Each insight is marked with how much it can bear.
    second baseline for Δ_prior), shuffle and remap worlds, and the equalised-execution body.
 4. **Sensitivity.** A short learning-rate sweep (e.g. 1e-5, 4e-5, 1e-4) on one cell, and adapting the
    experts (`--lora-experts`) on one H200, to check that the effect is not an artefact of
-   attention-only LoRA.
+   a LoRA that skips the routed experts.
 5. **The full inspection.** The change ledger on matched checkpoints for every seed, return trips with
    relearning, and steering along the top adapter directions.
 

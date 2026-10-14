@@ -246,7 +246,7 @@ def section_caveats(runs: dict, dp: dict, insp: dict) -> list[str]:
                    "construction.")
     if any(r.get("return_trip") for r in insp.values()):
         out.append("Return-trip scores come from one seed per condition.")
-    out.append("One model, one learning rate and attention-only LoRA throughout. Results describe this "
+    out.append("One model, one learning rate and a LoRA that skips the routed experts, throughout. Results describe this "
                "model's priors under this training, not people.")
     return ["## Caveats", ""] + [f"- {c}" for c in out] + [""]
 

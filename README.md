@@ -182,7 +182,7 @@ evidence of internal mechanism.
 
 `scripts/pod_report_run.sh` fills the 2×2 grid (Named/Masked × counterfactual/reference) to three
 seeds per cell with the budget settings (8 updates × 8 episodes, lr 4e-5, renormalised loss,
-attention-only LoRA), reusing the two seed-0 counterfactual runs from `scripts/pod_budget_run.sh`.
+LoRA on all linear layers with the routed experts frozen), reusing the two seed-0 counterfactual runs from `scripts/pod_budget_run.sh`.
 It then inspects Named u8 against Masked u4 (the checkpoint with the matching counterfactual score)
 and Masked u8, and writes `analysis.json` and `report.md`. It is resumable and can be split across
 pods with `SHARD`/`NSHARDS`; `BACKEND=mock` dry-runs it offline.
