@@ -165,6 +165,14 @@ svg.chart * { vector-effect: non-scaling-stroke; }
 .bar-fill { position: absolute; left: 0; top: 0; bottom: 0; }
 .teaser-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.5; }
 
+/* Opening figure: the four stages of the study, above the evidence */
+.t-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
+.t-stage { min-width: 0; border-top: 1px solid var(--fg); padding: 10px 0 0; }
+.t-stage > span { display: block; font-size: 11px; color: var(--muted); }
+.t-stage strong { display: block; font-size: 12.5px; font-weight: 600; line-height: 1.35; margin-top: 6px; }
+.t-stage p { font-size: 11.5px; line-height: 1.5; margin: 5px 0 0; }
+@media (max-width: 760px) { .t-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; } }
+
 /* World strip */
 .world-grid { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 14px 18px; align-items: center; }
 .world-label { font-size: 12px; line-height: 1.4; }
@@ -296,6 +304,12 @@ footer.end a { color: var(--fg); }
 
   <figure class="fig" style="margin:0" aria-labelledby="teaser-cap">
     <div class="frame">
+      <div class="t-stages" aria-label="The four stages of the study">
+        <div class="t-stage"><span>01 / design</span><strong>Change the world</strong><p>Hold the bodies fixed. Make repetition an advantage by changing the rule.</p></div>
+        <div class="t-stage"><span>02 / describe</span><strong>Change the words</strong><p>Compare familiar associations with invented labels, using the same actions.</p></div>
+        <div class="t-stage"><span>03 / learn</span><strong>Train from feedback</strong><p>See how quickly separate adapters learn to act in the stable world.</p></div>
+        <div class="t-stage"><span>04 / transfer</span><strong>Flip the rule back</strong><p>Test whether the learned behavior works in the changing world too.</p></div>
+      </div>
       <div class="t-world">
         <div class="t-world-text"><b>01 / the stable world used for training</b>The same valve supplies water each cycle. A body that repeats reliably can now outperform a body that switches easily. The changing-world condition provides the comparison.</div>
         <svg class="chart" id="t-strip" role="img" aria-label="Valve 2 is active in every cycle"></svg>
