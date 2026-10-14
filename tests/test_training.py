@@ -128,3 +128,33 @@ def test_run_training_writes_logs_and_learning_cost(tmp_path, normaliser):
     assert len(test.episodes) == 128
     with pytest.raises(SealError):
         sealed_test(cfg, be, normaliser, tmp_path / cfg.run_id)
+
+
+def test_interrupted_run_resumes_to_the_same_result(tmp_path, normaliser):
+    cfg = RunConfig("t-resume", updates=5, seeds_per_update=1, eval_updates=(0, 5), eval_seeds=2,
+                    checkpoint_every=2, loss=LossConfig(learning_rate=0.01))
+    whole = run_training(cfg, MockBackend(), normaliser, tmp_path / "whole")
+
+    be = MockBackend()
+    real_train, calls = be.train, []
+
+    def crash_on_fourth(items, loss):
+        calls.append(1)
+        if len(calls) == 4:
+            raise ConnectionError("simulated drop during update 4")
+        return real_train(items, loss)
+
+    be.train = crash_on_fourth
+    with pytest.raises(ConnectionError):
+        run_training(cfg, be, normaliser, tmp_path / "cut")
+    assert json.loads((tmp_path / "cut" / "state.json").read_text())["update"] == 2
+    with pytest.raises(RuntimeError, match="partial run"):
+        run_training(cfg, be, normaliser, tmp_path / "cut")
+    be.train = real_train
+    resumed = run_training(cfg, be, normaliser, tmp_path / "cut", resume=True)
+
+    assert resumed.learning_cost == pytest.approx(whole.learning_cost)
+    assert [r["return"] for r in resumed.train_returns] == [r["return"] for r in whole.train_returns]
+    assert resumed.evals[5]["mean_score"] == pytest.approx(whole.evals[5]["mean_score"])
+    updates = [json.loads(l)["update"] for l in (tmp_path / "cut" / "updates.jsonl").read_text().splitlines()]
+    assert updates == [1, 2, 3, 4, 5]  # update 3, written before the crash, is not duplicated

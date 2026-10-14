@@ -61,3 +61,42 @@ def test_adapter_interventions_restore_weights(backend):
     assert all(torch.equal(before[k], after[k]) for k in before)
     spec = adapters.adapter_spectrum(backend.model)
     assert spec and all(len(v) >= 1 for v in spec.values())
+
+
+def test_kv_cached_scoring_matches_full_prefix(backend):
+    r = make_rendering("masked", 1)
+    specs = [EpisodeSpec(COUNTERFACTUAL, PROFILE_A, s, r) for s in (5, 6)]
+    cached = rollout(specs, backend.scorer(), backend.tokenizer, SamplingConfig(salt=7))
+    full_scorer = backend.scorer()
+    full_scorer.cache_episodes = 0
+    full = rollout(specs, full_scorer, backend.tokenizer, SamplingConfig(salt=7))
+    for a, b in zip(cached, full):
+        assert a.actions == b.actions
+        np.testing.assert_allclose([d.lp_full for d in a.decisions], [d.lp_full for d in b.decisions],
+                                   atol=1e-4)
+    assert backend.usage.cached_prompt_tokens > 0
+
+
+def test_cache_is_dropped_after_a_training_step(backend):
+    sc = backend.scorer()
+    spec = EpisodeSpec(COUNTERFACTUAL, PROFILE_A, 8, make_rendering("named"))
+    trajs = rollout([spec], sc, backend.tokenizer, SamplingConfig())
+    assert sc._entries
+    backend.train(make_train_items(trajs, compute_advantages(trajs)), LossConfig(learning_rate=1e-4))
+    sc.score_batch([])
+    assert not sc._entries
+
+
+def test_hf_load_restores_adapters_and_optimiser(backend, tmp_path):
+    backend.checkpoint_dir = tmp_path
+    spec = EpisodeSpec(COUNTERFACTUAL, PROFILE_A, 9, make_rendering("named"))
+    trajs = rollout([spec], backend.scorer(), backend.tokenizer, SamplingConfig())
+    items = make_train_items(trajs, compute_advantages(trajs))
+    backend.train(items, LossConfig(learning_rate=1e-3))
+    path = backend.save("resume-me")
+    saved = backend.lora_state()
+    step = backend.opt.state_dict()["state"][0]["step"].item()
+    backend.train(items, LossConfig(learning_rate=1e-3))
+    backend.load(path)
+    assert all(torch.equal(saved[k], v) for k, v in backend.lora_state().items())
+    assert backend.opt.state_dict()["state"][0]["step"].item() == step

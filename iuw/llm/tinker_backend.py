@@ -214,6 +214,11 @@ class TinkerBackend:
         self.training.save_weights_for_sampler(name).result()
         return state.path
 
+    def load(self, path: str) -> None:
+        """Restores adapters and optimiser state saved by :meth:`save` (for resuming a run)."""
+        self.training.load_state(path).result()
+        self._sampler = self.training.save_weights_and_get_sampling_client()
+
     def generate(self, tokens, max_tokens, temperature=1.0, stop=None, seed=None) -> list[int]:
         t = self.types
         res = self._sampler.sample(

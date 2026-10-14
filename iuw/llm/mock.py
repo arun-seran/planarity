@@ -106,6 +106,7 @@ class MockBackend:
         self.reference = copy.deepcopy(self.model.params)
         self.usage = UsageStats()
         self.checkpoints: dict[str, MockParams] = {}
+        self._opt_states: dict[str, tuple] = {}
         self._m = [np.zeros_like(self.model.params.W), np.zeros_like(self.model.params.b)]
         self._v = [np.zeros_like(self.model.params.W), np.zeros_like(self.model.params.b)]
         self._t = 0
@@ -189,10 +190,14 @@ class MockBackend:
     # ----- checkpoints and generation --------------------------------------------------------
     def save(self, name: str) -> str:
         self.checkpoints[name] = copy.deepcopy(self.model.params)
+        self._opt_states[name] = copy.deepcopy((self._m, self._v, self._t))
         return f"mock://{name}"
 
     def load(self, path: str) -> None:
-        self.model.params = copy.deepcopy(self.checkpoints[path.removeprefix("mock://")])
+        name = path.removeprefix("mock://")
+        self.model.params = copy.deepcopy(self.checkpoints[name])
+        if name in self._opt_states:
+            self._m, self._v, self._t = copy.deepcopy(self._opt_states[name])
 
     def generate(self, tokens, max_tokens, temperature=1.0, stop=None, seed=None) -> list[int]:
         text = ("Strategy: inspect at the start. When the last command was ok and water rose, "

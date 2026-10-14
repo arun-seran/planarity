@@ -40,6 +40,7 @@ class RunConfig:
     seed_index: int = 0  # 0..2; also fixes the Masked mapping
     updates: int = 50
     seeds_per_update: int = 8  # x bodies = 16 episodes per update
+    eval_seeds: Optional[int] = None  # first N seeds of eval_split; None = all (local tryouts only)
     bodies: tuple[str, ...] = ("A", "B")
     eval_updates: tuple[int, ...] = (0, 10, 20, 30, 40, 50)
     eval_worlds: tuple[str, ...] = ("reference", "counterfactual")
@@ -54,6 +55,7 @@ class RunConfig:
     explicit_rules: bool = False
     illegal_mass_limit: float = 0.01
     init_checkpoint: Optional[str] = None  # e.g. a codebook-familiarised checkpoint
+    checkpoint_every: int = 5  # resumable state (adapters + optimiser) every N updates
 
     @property
     def mapping_index(self) -> int:
@@ -97,6 +99,17 @@ class RunLogger:
             with open(self.dir / name, "a") as f:
                 f.write(json.dumps(obj, default=_json_default) + "\n")
 
+    def read(self, name: str) -> list[dict]:
+        f = self.dir / name if self.dir else None
+        return [json.loads(line) for line in f.read_text().splitlines()] if f and f.exists() else []
+
+    def keep_through_update(self, name: str, update: int) -> list[dict]:
+        """Drop records written after ``update`` (work that a resumed run repeats)."""
+        rows = [r for r in self.read(name) if r["update"] <= update]
+        if self.dir and (self.dir / name).exists():
+            (self.dir / name).write_text("".join(json.dumps(r, default=_json_default) + "\n" for r in rows))
+        return rows
+
 
 def _json_default(o):
     if isinstance(o, np.ndarray):
@@ -134,9 +147,19 @@ class RunResult:
 
 
 def run_training(cfg: RunConfig, backend: Backend, normaliser: ScoreNormaliser,
-                 out_dir: Optional[Path] = None, progress=None) -> RunResult:
+                 out_dir: Optional[Path] = None, progress=None, resume: bool = False) -> RunResult:
+    """Run one training run. With ``resume``, continue from the run directory's last saved
+    state: adapters and optimiser are restored and updates after it are repeated. Rollout
+    seeds and sampling salts are keyed by update, so the continuation matches an
+    uninterrupted run up to floating-point nondeterminism."""
     log = RunLogger(out_dir)
-    log.write("config.json", cfg.to_dict())
+    state_file = out_dir / "state.json" if out_dir else None
+    state = json.loads(state_file.read_text()) if state_file and state_file.exists() else None
+    if state and not resume:
+        raise RuntimeError(f"{out_dir} already holds a partial run (through update {state['update']}); "
+                           "pass resume=True (--resume) to continue it, or remove the directory")
+    if not state:
+        log.write("config.json", cfg.to_dict())
     rendering = make_rendering(cfg.rendering, cfg.mapping_index)
     world = get_world(cfg.train_world)
     options = PromptOptions(explicit_rules=world.q if cfg.explicit_rules else None)
@@ -147,9 +170,15 @@ def run_training(cfg: RunConfig, backend: Backend, normaliser: ScoreNormaliser,
     checkpoints: dict[int, str] = {}
     train_records: list[dict] = []
     regret_total = 0.0
+    start = 1
+
+    def save_state(u: int) -> None:
+        path = checkpoints[u] if u in checkpoints else backend.save(f"{cfg.run_id}-u{u:03d}")
+        log.write("state.json", {"update": u, "checkpoint": path, "regret_total": regret_total,
+                                 "flags": flags, "evals": evals, "checkpoints": checkpoints})
 
     def do_eval(u: int) -> None:
-        specs = eval_specs(SPLITS[cfg.eval_split], cfg.eval_worlds, rendering, cfg.bodies, options,
+        specs = eval_specs(SPLITS[cfg.eval_split][:cfg.eval_seeds], cfg.eval_worlds, rendering, cfg.bodies, options,
                            cfg.eval_split)
         res, _ = evaluate(backend.scorer(), tok, specs, normaliser, salt=EVAL_SALT,
                           temperature=cfg.temperature)
@@ -160,9 +189,21 @@ def run_training(cfg: RunConfig, backend: Backend, normaliser: ScoreNormaliser,
         if progress:
             progress(f"[{cfg.run_id}] eval u={u}: S={res.mean_score:.3f}")
 
-    if 0 in cfg.eval_updates:
+    if state:
+        backend.load(state["checkpoint"])
+        start = state["update"] + 1
+        regret_total, flags = state["regret_total"], state["flags"]
+        evals = {int(k): v for k, v in state["evals"].items()}
+        checkpoints.update({int(k): v for k, v in state["checkpoints"].items()})
+        train_records = log.keep_through_update("episodes.jsonl", state["update"])
+        log.keep_through_update("updates.jsonl", state["update"])
+        log.keep_through_update("evals.jsonl", state["update"])
+        if progress:
+            progress(f"[{cfg.run_id}] resuming after update {state['update']}")
+    elif 0 in cfg.eval_updates:
         do_eval(0)
-    for u in range(1, cfg.updates + 1):
+        save_state(0)
+    for u in range(start, cfg.updates + 1):
         t0 = time.time()
         specs = [EpisodeSpec(world, PROFILES[b], seed, rendering, ep, options, "train")
                  for seed, ep in training_batch(u, cfg.seeds_per_update) for b in cfg.bodies]
@@ -211,6 +252,8 @@ def run_training(cfg: RunConfig, backend: Backend, normaliser: ScoreNormaliser,
                      f"{np.mean([t.episode_return for t in trajs]):.2f}")
         if u in cfg.eval_updates:
             do_eval(u)
+        if u in cfg.eval_updates or u % cfg.checkpoint_every == 0 or u == cfg.updates:
+            save_state(u)
     result = RunResult(cfg.run_id, cfg.to_dict(), regret_total, train_records, evals, checkpoints,
                        flags, backend.usage.as_dict())
     log.write("checkpoints.json", checkpoints)

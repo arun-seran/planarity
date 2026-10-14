@@ -18,6 +18,22 @@ pip install -e ".[inspect]"         # + local HF/PEFT backend and adapter interv
 pytest -q                           # 72 tests (+1 torch-only), about 2 minutes; -m "not slow" skips Monte Carlo
 ```
 
+## Local tryout (Apple silicon or one GPU)
+
+`--backend hf` runs the whole loop locally with transformers + PEFT (picks `cuda`, then `mps`,
+then `cpu`; override with `--device`). Use a small model and shrink the batches. This checks
+the plumbing; it is not the experiment.
+
+```bash
+pip install -e ".[test,local]"
+iuw smoke --backend hf --model Qwen/Qwen3-0.6B --episodes 4
+iuw train --backend hf --model Qwen/Qwen3-0.6B --updates 2 --seeds-per-update 2 --eval-seeds 2 --run-id local-tiny
+```
+
+On an M1 Pro (32 GB) the training command takes about 9 minutes and peaks near 21 GB:
+rollouts reuse a per-episode key/value cache (about 10 decisions/s), and training uses
+gradient checkpointing.
+
 ## Runbook (build order)
 
 Each stage must pass before the next spends money. Null results are kept.
@@ -96,8 +112,8 @@ Not verified here (no network to Tinker or Hugging Face, no GPU):
 
 ## Choices the spec left open
 
-- **Masked labels** are short letter-only pseudo-words (`zov`, `kel`, `dax`,
-  `wug`, `pim`, `tuv`). The spec's `op-0` / `unit-3` / `channel k7` are
+- **Masked labels** are short letter-only pseudo-words (`lom`, `kel`, `dax`,
+  `tib`, `pim`, `tuv`). The spec's `op-0` / `unit-3` / `channel k7` are
   examples. Letters only, so no label can be confused with an action digit or a
   value. Valves are `unit N` in Masked and `valve N` in Named, with N equal to
   the action ID in both, so neither rendering pays to decode the valve. The
@@ -161,3 +177,22 @@ return_trip.diagnose(scores, relearning={"original": ..., "relearn": ...})
 The change ledger (`ledger.ChangeLedger`) records one row per prior, measured
 on identical held-out histories. Belief answers are outputs to assess, not
 evidence of internal mechanism.
+
+## Report run (Runpod H200, budget-sized)
+
+`scripts/pod_report_run.sh` fills the 2×2 grid (Named/Masked × counterfactual/reference) to three
+seeds per cell with the budget settings (8 updates × 8 episodes, lr 4e-5, renormalised loss,
+attention-only LoRA), reusing the two seed-0 counterfactual runs from `scripts/pod_budget_run.sh`.
+It then inspects Named u8 against Masked u4 (the checkpoint with the matching counterfactual score)
+and Masked u8, and writes `analysis.json` and `report.md`. It is resumable and can be split across
+pods with `SHARD`/`NSHARDS`; `BACKEND=mock` dry-runs it offline.
+
+```bash
+bash scripts/pod_setup.sh
+SHARD=0 NSHARDS=2 nohup bash scripts/pod_report_run.sh > runs/report.log 2>&1 &
+python scripts/report.py --runs runs/report --out runs/report/report.md   # CPU only, after merging shards
+```
+
+Inspection histories replace a quarter of the planner's decisions with keyed random legal actions
+(`--epsilon 0.25`). On pure planner histories the base model is already near ceiling, because it
+copies the pattern in context, so the agreement measure barely moves.

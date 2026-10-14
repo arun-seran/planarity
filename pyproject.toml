@@ -14,6 +14,7 @@ test = ["pytest>=7"]
 tokenizers = ["transformers>=4.45", "regex"]
 tinker = ["tinker>=0.33", "torch>=2.2"]
 inspect = ["torch>=2.2", "transformers>=4.45", "peft>=0.12", "safetensors"]
+local = ["torch>=2.4", "transformers>=4.56", "peft>=0.12", "safetensors", "accelerate", "regex"]
 
 [project.scripts]
 iuw = "iuw.cli:main"

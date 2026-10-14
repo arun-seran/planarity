@@ -78,7 +78,7 @@ def run_grid(configs: Iterable[RunConfig], backend_factory: BackendFactory,
             fam = familiarise_codebook(backend, cfg.mapping_index)
             run_dir.mkdir(parents=True, exist_ok=True)
             (run_dir / "familiarisation.json").write_text(json.dumps(fam, indent=2, default=str))
-        res = run_training(cfg, backend, normaliser, run_dir, progress)
+        res = run_training(cfg, backend, normaliser, run_dir, progress, resume=True)
         if open_sealed_test:
             sealed_test(cfg, backend, normaliser, run_dir)
         results[cfg.run_id] = res

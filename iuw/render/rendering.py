@@ -29,7 +29,7 @@ from ..env.water import Observation, Phase
 from ..rng import Stream, keyed_uniform, namespace_key
 
 ROLES = ("probe", "actuate", "rest", "water", "burden", "noise")
-MASKED_POOL = ("zov", "kel", "dax", "wug", "pim", "tuv")
+MASKED_POOL = ("lom", "kel", "dax", "tib", "pim", "tuv")  # each one token under the Qwen3.6 tokenizer
 
 TUTORIAL_TEMPLATE = """\
 You operate one body at a {site} with four {unit}s, numbered 1 to 4. Each line below is one decision. Reply with one action number only.

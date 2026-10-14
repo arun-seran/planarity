@@ -43,7 +43,8 @@ def make_backend(args, seed: int = 0, init_checkpoint=None):
     if name == "hf":
         from .llm.hf_backend import HFBackend
 
-        return HFBackend(args.model, rank=args.rank, seed=seed, init_adapter=init_checkpoint)
+        return HFBackend(args.model, rank=args.rank, seed=seed, init_adapter=init_checkpoint,
+                         device=args.device, dtype=args.dtype, lora_experts=args.lora_experts)
     raise SystemExit(f"unknown backend {name}")
 
 
@@ -62,11 +63,14 @@ def _run_config(args):
     return RunConfig(
         run_id=args.run_id or f"{args.rendering}-{args.world}-s{args.seed}",
         rendering=args.rendering, train_world=get_world(args.world).name, seed_index=args.seed,
-        updates=args.updates, rank=args.rank, base_model=args.model,
+        updates=args.updates, seeds_per_update=args.seeds_per_update, eval_seeds=args.eval_seeds,
+        rank=args.rank, base_model=args.model,
         loss=LossConfig(clip=0.2, loss=args.loss, learning_rate=args.lr, passes=args.passes),
         kl=KLSchedule(args.kl, args.kl_coef, args.updates), entropy_coef=args.entropy,
         baseline=args.baseline, explicit_rules=args.explicit_rules,
-        eval_updates=tuple(u for u in (0, 10, 20, 30, 40, 50) if u <= args.updates))
+        eval_updates=(tuple(sorted(set(range(0, args.updates + 1, args.eval_every)) | {args.updates}))
+                      if args.eval_every else tuple(u for u in (0, 10, 20, 30, 40, 50) if u <= args.updates)),
+        checkpoint_every=args.checkpoint_every)
 
 
 def cmd_certify(args):
@@ -187,7 +191,7 @@ def cmd_train(args):
     cfg = _run_config(args)
     be = make_backend(args, seed=cfg.seed_index, init_checkpoint=args.init_checkpoint)
     run_dir = Path(args.out) / cfg.run_id
-    res = run_training(cfg, be, _normaliser(), run_dir, progress=print)
+    res = run_training(cfg, be, _normaliser(), run_dir, progress=print, resume=args.resume)
     out = {"run_id": cfg.run_id, "learning_cost": res.learning_cost, "flags": res.flags[:20],
            "eval_curve": res.eval_curve(), "usage": res.usage}
     if args.test:
@@ -255,6 +259,10 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--backend", default="tinker", choices=["tinker", "hf", "mock"])
         sp.add_argument("--model", default=ModelChoice().main)
         sp.add_argument("--rank", type=int, default=32)
+        sp.add_argument("--device", default=None, help="hf backend: cuda, mps or cpu (default: best available)")
+        sp.add_argument("--dtype", default="bfloat16", help="hf backend: bfloat16, float16 or float32")
+        sp.add_argument("--lora-experts", action="store_true",
+                        help="hf backend: also put LoRA on fused MoE expert weights (all-linear skips them)")
 
     def run_args(sp):
         backend_args(sp)
@@ -263,6 +271,9 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--seed", type=int, default=0)
         sp.add_argument("--run-id", default=None)
         sp.add_argument("--updates", type=int, default=50)
+        sp.add_argument("--seeds-per-update", type=int, default=8, help="x 2 bodies = episodes per update")
+        sp.add_argument("--eval-seeds", type=int, default=None,
+                        help="evaluate on the first N dev seeds only (local tryouts; default all 16)")
         sp.add_argument("--lr", type=float, default=1e-5)
         sp.add_argument("--passes", type=int, default=1)
         sp.add_argument("--loss", default="builtin-ppo", choices=["builtin-ppo", "renormalised"])
@@ -273,6 +284,10 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--explicit-rules", action="store_true")
         sp.add_argument("--out", default="runs")
         sp.add_argument("--test", action="store_true", help="open the sealed test once at the end")
+        sp.add_argument("--eval-every", type=int, default=None,
+                        help="evaluate every N updates and at the last (default: the spec's 0, 10 ... 50)")
+        sp.add_argument("--checkpoint-every", type=int, default=5,
+                        help="save resumable state every N updates (also at every evaluation)")
 
     sp = sub.add_parser("certify")
     sp.add_argument("--episodes", type=int, default=1000)
@@ -316,6 +331,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("train")
     run_args(sp)
     sp.add_argument("--init-checkpoint", default=None)
+    sp.add_argument("--resume", action="store_true", help="continue a partial run from its last saved state")
     sp.set_defaults(func=cmd_train)
 
     sp = sub.add_parser("grid")

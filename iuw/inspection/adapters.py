@@ -88,7 +88,7 @@ def keep_top_directions(model, k: int, adapter: str = "default", random_control:
             if random_control:
                 Q1, _ = torch.linalg.qr(torch.randn(U.shape[0], kk, generator=gen))
                 Q2, _ = torch.linalg.qr(torch.randn(Vh.shape[1], kk, generator=gen))
-                Uk, Vk = Q1, Q2.T
+                Uk, Vk = Q1.to(dW.device), Q2.T.to(dW.device)  # CPU generator keeps the draw device-independent
             else:
                 Uk, Vk = U[:, :kk], Vh[:kk]
             Sk = S[:kk]

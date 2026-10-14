@@ -106,6 +106,10 @@ class Backend(Protocol):
 
     def save(self, name: str) -> str: ...
 
+    def load(self, path: str) -> None:
+        """Restore adapters and optimiser state from a path returned by save()."""
+        ...
+
     def generate(self, tokens: Sequence[int], max_tokens: int, temperature: float = 1.0,
                  stop: Optional[Sequence[str]] = None, seed: Optional[int] = None) -> list[int]: ...
 
