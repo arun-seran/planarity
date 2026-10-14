@@ -17,7 +17,7 @@ What if there existed a world where a tendency often treated as unproductive in 
 
 Suppose such a world exists. Now ask an AI agent, trained on knowledge produced in *our* world, to operate there. Can it learn how that world works? What happens when the expectations it brings are useful in one setting and misleading in another? Does it need to change what it predicts, how it acts, or both?
 
-That thought experiment led me to build **Inverted-Utility World**. First I designed a simple environment where the relative advantage of two fixed capabilities reverses. Then I used it to study a separate question: **how does a pretrained model adapt when its familiar description of a task may influence what it expects to happen?**
+That thought experiment led me to start **Project Planarity** and build its first world, **Inverted-Utility World**. First I designed a simple environment where the relative advantage of two fixed capabilities reverses. Then I used it to study a separate question: **how does a pretrained model adapt when its familiar description of a task may influence what it expects to happen?**
 
 | designed premise | observed pilot | open explanation |
 |---|---|---|
