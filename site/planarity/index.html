@@ -167,7 +167,7 @@ svg.chart * { vector-effect: non-scaling-stroke; }
 .result .bar-row + .bar-row { margin-top: 6px; }
 .bar-track { height: 12px; border: 1px solid var(--fg); background: #fff; position: relative; }
 .bar-fill { position: absolute; left: 0; top: 0; bottom: 0; }
-.teaser-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.5; }
+.teaser-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); text-align: left; line-height: 1.5; }
 
 /* Opening figure: the four stages of the study, above the evidence */
 .t-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 22px; }
@@ -345,7 +345,7 @@ footer.end a { color: var(--fg); }
         <div class="t-cell"><span class="cap">03 / score after learning · 64 episodes</span><svg class="chart" id="t-spark-masked" role="img" aria-label="Invented words: score rises to 0.92 and 0.90"></svg></div>
         <div class="t-cell"><span class="cap">04 / score in the changing world</span><div class="result" id="teaser-masked"></div></div>
       </div>
-      <div class="teaser-foot">Each run uses the same pretrained model, environment, and actions. Only the words used to describe the environment change. Each version was trained twice.<br>Scores show how well the model performs. A score of 0 matches random actions, while 1 matches a controller that knows the world's rules.</div>
+      <div class="teaser-foot">Each run uses the same pretrained model, environment, and actions. Only the words used to describe the environment change. Each version was trained twice. Scores show how well the model performs. A score of 0 matches random actions, while 1 matches a controller that knows the world's rules.</div>
     </div>
     <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I designed a world where repeating an action is unusually valuable, then trained the same language model using two descriptions of that world. With invented labels, its final score reached 0.90–0.92; with familiar words, 0.23–0.34. The invented-label runs also scored highly under the opposite world rule. <strong>What caused the difference is still open.</strong> The next experiments ask whether the model was slowed by prior expectations, by the interface itself, or by something in how it learned.</figcaption>
   </figure>
