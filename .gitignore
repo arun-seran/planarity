@@ -8,3 +8,4 @@ runs/
 artifacts/runs/
 .venv/
 .DS_Store
+docs/
