@@ -31,14 +31,6 @@
   --violet-tint: #ede9fe;
   --grey: #8a8580;
   --green: #16a34a;
-  --water: #3ca3c8;
-  --water-dark: #24677f;
-  --water-tint: #e3f2f8;
-  --teal: #0d9488;
-  --body-a: #c45f84;
-  --body-a-tint: #f6e3ea;
-  --body-b: #5b8a3a;
-  --body-b-tint: #e8f0df;
   --red: #dc2626;
   --serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
   --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -145,8 +137,7 @@ svg.chart text { font-family: var(--mono); }
 .chip { display: inline-block; font-family: var(--mono); font-size: 12px; padding: 1px 6px; border: 1px solid var(--fg); background: #fff; }
 .chip.amber { border-color: var(--amber-mid); background: var(--amber-tint); }
 .chip.violet { border-color: var(--violet-mid); background: var(--violet-tint); }
-.chip.teal { border-color: var(--teal); background: #ccfbf1; }
-.chip.water { border-color: var(--water-dark); background: var(--water); color: #fff; }
+.chip.on { border-color: var(--fg); background: var(--fg); color: #fff; }
 
 /* Segmented toggle */
 .seg { display: inline-flex; border: 1px solid var(--fg); background: #fff; }
@@ -176,7 +167,7 @@ svg.chart text { font-family: var(--mono); }
 /* World strip */
 .world-grid { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 14px 18px; align-items: center; }
 .world-label { font-size: 12px; line-height: 1.4; }
-.world-label b { font-size: 13px; font-weight: 600; display: block; color: var(--water-dark); }
+.world-label b { font-size: 13px; font-weight: 600; display: block; }
 .actions-key { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 18px; font-size: 12px; border-top: 1px solid var(--line); padding-top: 14px; }
 
 /* Bodies */
@@ -184,12 +175,7 @@ svg.chart text { font-family: var(--mono); }
 .body-card { border: 1px solid var(--fg); background: #fff; padding: 12px 14px; box-shadow: 0 2px 2px rgba(0,0,0,.07); }
 .body-card + .body-card { margin-top: 12px; }
 .body-card .name { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
-.body-card.a { border-color: var(--body-a); background: var(--body-a-tint); }
-.body-card.a .name { color: var(--body-a); }
-.body-card.a .fill { background: var(--body-a); }
-.body-card.b { border-color: var(--body-b); background: var(--body-b-tint); }
-.body-card.b .name { color: var(--body-b); }
-.body-card.b .fill { background: var(--body-b); }
+
 .meter { display: grid; grid-template-columns: 74px minmax(0,1fr) 36px; gap: 8px; align-items: center; font-size: 11.5px; margin-top: 4px; }
 .meter .track { height: 9px; border: 1px solid var(--fg); position: relative; background: #fff; }
 .meter .fill { position: absolute; inset: 0 auto 0 0; background: var(--fg); }
@@ -304,7 +290,7 @@ footer.end a { color: var(--fg); }
       </div>
       <div class="teaser-foot">Same model (Qwen3.6-35B-A3B), same world, same actions. Only the words differ. Two training runs per row.<br>Score: 0 = random actions · 1 = a controller that knows the rule.</div>
     </div>
-    <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I built a simulated canal whose hidden rule makes a body that is good at repeating, and bad at switching, come out ahead. Then I trained one language model to act there, with the world described either in familiar words or in invented ones. With invented words, the model reached about 0.9 of a rule-aware controller within 64 episodes, and it kept that level when the rule flipped back. With familiar words, it reached 0.23 to 0.34, and its predictions about the canal shifted in a way that was wrong in the other world. Six short runs make this a lead, not yet a finding.</figcaption>
+    <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I built a simulated canal whose hidden rule makes a body that is good at repeating, and bad at switching, come out ahead. Then I trained one language model to act there, with the world described either in familiar words or in invented ones. With invented words, the model reached about 0.9 of a rule-aware controller within 64 episodes, and it kept that level when the rule flipped back. With familiar words, it reached 0.23 to 0.34, and its predictions about the canal shifted in a way that was wrong in the other world.</figcaption>
   </figure>
 </div>
 
@@ -336,15 +322,15 @@ footer.end a { color: var(--fg); }
         <div><svg class="chart" id="strip-stable" role="img" aria-label="Stable world: the same valve is active in every cycle"></svg></div>
       </div>
       <div class="actions-key">
-        <span><span class="chip water">2</span> active valve</span>
-        <span><span class="chip teal">0</span> inspect · 1 energy</span>
+        <span><span class="chip on">2</span> active valve</span>
+        <span><span class="chip">0</span> inspect · 1 energy</span>
         <span><span class="chip">1–4</span> open a valve · 1 energy</span>
         <span><span class="chip">5</span> rest · free</span>
-        <span><b style="color:var(--teal)">0</b><b> → 2</b> = inspect, then open valve 2</span>
+        <span><b>0 → 2</b> = inspect, then open valve 2</span>
         <span>score: +1 per litre, −0.05 per energy</span>
       </div>
     </div>
-    <figcaption id="fig1-cap"><span class="fignum">Figure 1.</span>The same canal under two rules. Blue marks the active valve. A controller that knows the rule inspects every cycle in the changing world. In the stable world it inspects once and then repeats the same command. The valve sequence shown is an example.</figcaption>
+    <figcaption id="fig1-cap"><span class="fignum">Figure 1.</span>The same canal under two rules. Black marks the active valve. A controller that knows the rule inspects every cycle in the changing world. In the stable world it inspects once and then repeats the same command. The valve sequence shown is an example.</figcaption>
   </figure>
 
   <p>The agent controls one of two <em>synthetic</em> bodies. Their abilities never change; only the world does. Body A almost always manages to repeat a command and rarely manages to switch. Body B is steady at both.</p>
@@ -353,12 +339,12 @@ footer.end a { color: var(--fg); }
     <div class="frame">
       <div class="bodies">
         <div>
-          <div class="body-card a">
+          <div class="body-card">
             <div class="name">Body A</div>
             <div class="meter"><span>repeat</span><span class="track"><span class="fill" style="width:98%"></span></span><span>98%</span></div>
             <div class="meter"><span>switch</span><span class="track"><span class="fill" style="width:10%"></span></span><span>10%</span></div>
           </div>
-          <div class="body-card b">
+          <div class="body-card">
             <div class="name">Body B</div>
             <div class="meter"><span>repeat</span><span class="track"><span class="fill" style="width:75%"></span></span><span>75%</span></div>
             <div class="meter"><span>switch</span><span class="track"><span class="fill" style="width:75%"></span></span><span>75%</span></div>
@@ -423,7 +409,7 @@ footer.end a { color: var(--fg); }
           <button type="button" aria-pressed="false" data-world="changing">scored in: changing</button>
         </span>
       </div>
-      <div class="fig-sub" id="fig4-sub">The four runs that trained here. The two changing-world runs are shown in grey.</div>
+      <div class="fig-sub" id="fig4-sub">Coloured: the four runs that trained in this world. Grey: the two runs that trained in the changing world.</div>
       <svg class="chart" id="curves" role="img" aria-label="Learning curves"></svg>
       <div class="legend" id="curves-legend"></div>
     </div>
@@ -462,7 +448,7 @@ footer.end a { color: var(--fg); }
     <div class="frame">
       <div class="fig-title"><span>Same score, different change</span></div>
       <svg class="chart" id="inside-chart" role="img" aria-label="Next-valve error, stable world: Named 0.17 to 0.07, Masked 0.10 to 0.10. Changing world: Named 0.48 to 0.81, Masked 0.49 to 0.45. Chance to inspect in the stable world: Named 0.051 to 0.053, Masked 0.050 to 0.064."></svg>
-      <div class="legend"><span><svg width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#fff" stroke="#000"/><line x1="10" y1="5" x2="24" y2="5" stroke="#000"/><circle cx="29" cy="5" r="4" fill="#000"/></svg>adapter off → on</span><span style="color:var(--amber)"><span class="sw"></span><span style="color:var(--fg)">Named, 64 episodes</span></span><span style="color:var(--violet)"><span class="sw"></span><span style="color:var(--fg)">Masked, 32 episodes</span></span></div>
+      <div class="legend"><span><svg width="34" height="10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="#fff" stroke="#000"/><line x1="10" y1="5" x2="24" y2="5" stroke="#000"/><circle cx="29" cy="5" r="4" fill="#000"/></svg>adapter off → on</span><span style="color:var(--amber-mid)"><span class="sw"></span><span style="color:var(--fg)">Named, 64 episodes</span></span><span style="color:var(--violet-mid)"><span class="sw"></span><span style="color:var(--fg)">Masked, 32 episodes</span></span></div>
     </div>
     <figcaption id="fig6-cap"><span class="fignum">Figure 6.</span>Next-valve error is the distance between the model's guess for the next active valve and the world's true rule; lower is closer. Named moved its guesses toward "the valve stays", including in the changing world where that is wrong. Masked left its guesses alone and inspected more often.</figcaption>
   </figure>
@@ -521,9 +507,7 @@ footer.end a { color: var(--fg); }
   var C = {
     fg: "#000", muted: "#787168", line: "#d0ccc8", grey: "#a8a29e",
     amber: "#d97706", amberMid: "#f59e0b", amberTint: "#fef3c7",
-    violet: "#7c3aed", violetMid: "#8b5cf6", violetTint: "#ede9fe",
-    water: "#3ca3c8", waterDark: "#24677f", teal: "#0d9488",
-    bodyA: "#c45f84", bodyB: "#5b8a3a"
+    violet: "#7c3aed", violetMid: "#8b5cf6", violetTint: "#ede9fe"
   };
 
   function el(name, attrs, parent, text) {
@@ -560,11 +544,11 @@ footer.end a { color: var(--fg); }
       for (var v = 1; v <= 4; v++) {
         var on = v === 2;
         el("rect", { x: i * cw + 5, y: top + (v - 1) * rowH, width: cw - 10, height: rowH - 3,
-          fill: on ? C.water : "#fff", stroke: on ? C.waterDark : C.fg, "stroke-width": 1 }, svg);
+          fill: on ? C.fg : "#fff", stroke: C.fg, "stroke-width": 1 }, svg);
       }
     }
   })();
-  function spark(id, color, runs, endLabel) {
+  function spark(id, color, labelColor, runs, endLabel) {
     var svg = document.getElementById(id);
     var W = 240, H = 78, L = 18, R = 78, T = 6, B = 14;
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
@@ -578,13 +562,13 @@ footer.end a { color: var(--fg); }
     el("text", { x: W - R, y: H - 2, "text-anchor": "end", "font-size": 8.5, fill: C.muted }, svg, "64");
     runs.forEach(function (v, k) {
       var d = v.map(function (val, i) { return (i ? "L" : "M") + x([0, 32, 64][i]) + " " + y(val); }).join(" ");
-      el("path", { d: d, fill: "none", stroke: color, "stroke-width": 2.25, "stroke-dasharray": k ? "5 3" : "" }, svg);
+      el("path", { d: d, fill: "none", stroke: color, "stroke-width": 2.5, "stroke-dasharray": k ? "5 3" : "" }, svg);
     });
     var endY = runs.reduce(function (a, v) { return a + y(v[2]); }, 0) / runs.length;
-    el("text", { x: W - R + 6, y: endY + 4, "font-size": 11, "font-weight": 600, fill: color }, svg, endLabel);
+    el("text", { x: W - R + 6, y: endY + 4, "font-size": 11, "font-weight": 600, fill: labelColor }, svg, endLabel);
   }
-  spark("t-spark-named", C.amber, [[-0.224, -0.213, 0.338], [-0.224, -0.055, 0.233]], "0.34 · 0.23");
-  spark("t-spark-masked", C.violet, [[-0.212, 0.333, 0.917], [0.048, 0.898, 0.902]], "0.92 · 0.90");
+  spark("t-spark-named", C.amberMid, C.amber, [[-0.224, -0.213, 0.338], [-0.224, -0.055, 0.233]], "0.34 · 0.23");
+  spark("t-spark-masked", C.violetMid, C.violet, [[-0.212, 0.333, 0.917], [0.048, 0.898, 0.902]], "0.92 · 0.90");
 
   /* Figure 1: valve strips */
   var changingSeq = [2, 2, 4, 4, 4, 1, 3, 1, 2, 4, 3, 3];
@@ -602,7 +586,7 @@ footer.end a { color: var(--fg); }
         var y = top + (v - 1) * rowH;
         var on = seq[i] === v;
         el("rect", { x: x + 8, y: y, width: cw - 16, height: rowH - 3,
-          fill: on ? C.water : "#fff", stroke: on ? C.waterDark : C.fg, "stroke-width": 1 }, svg);
+          fill: on ? C.fg : "#fff", stroke: C.fg, "stroke-width": 1 }, svg);
         el("text", { x: x + cw / 2, y: y + rowH - 5.5, "text-anchor": "middle", "font-size": 8,
           fill: on ? "#fff" : C.muted }, svg, String(v));
       }
@@ -610,10 +594,9 @@ footer.end a { color: var(--fg); }
         var t = el("text", { x: x + cw / 2, y: top + 4 * rowH + 16, "text-anchor": "middle", "font-size": 10,
           "font-weight": 600 }, svg);
         if (!stable || i === 0) {
-          el("tspan", { fill: C.teal }, t, "0");
-          el("tspan", { fill: C.fg }, t, " → " + seq[i]);
+          el("tspan", {}, t, "0 → " + seq[i]);
         } else {
-          el("tspan", { fill: C.fg }, t, String(seq[i]));
+          el("tspan", {}, t, String(seq[i]));
         }
       }
     }
@@ -651,14 +634,14 @@ footer.end a { color: var(--fg); }
     el("text", { x: xs[1], y: H - 14, "text-anchor": "middle", "font-size": 12 }, svg, "stable world");
     el("text", { x: 12, y: T - 8, "font-size": 11, fill: C.muted }, svg, "expected score");
     var series = [
-      { name: "Body A", v: [21.78, 92.07], color: C.bodyA },
-      { name: "Body B", v: [65.00, 69.95], color: C.bodyB }
+      { name: "Body A", v: [21.78, 92.07], color: C.fg, dash: "" },
+      { name: "Body B", v: [65.00, 69.95], color: C.fg, dash: "5 4" }
     ];
     var best = [1, 0];  // index of the better body in each world
-    el("text", { x: xs[0], y: y(65.00) - 16, "text-anchor": "middle", "font-size": 10.5, fill: C.bodyB, "font-weight": 600 }, svg, "B ahead");
-    el("text", { x: xs[1], y: y(92.07) - 16, "text-anchor": "middle", "font-size": 10.5, fill: C.bodyA, "font-weight": 600 }, svg, "A ahead");
+    el("text", { x: xs[0], y: y(65.00) - 16, "text-anchor": "middle", "font-size": 10.5, "font-weight": 600 }, svg, "B ahead");
+    el("text", { x: xs[1], y: y(92.07) - 16, "text-anchor": "middle", "font-size": 10.5, "font-weight": 600 }, svg, "A ahead");
     series.forEach(function (s, si) {
-      el("line", { x1: xs[0], y1: y(s.v[0]), x2: xs[1], y2: y(s.v[1]), stroke: s.color, "stroke-width": 3 }, svg);
+      el("line", { x1: xs[0], y1: y(s.v[0]), x2: xs[1], y2: y(s.v[1]), stroke: s.color, "stroke-width": 2.5, "stroke-dasharray": s.dash }, svg);
       s.v.forEach(function (v, i) {
         var win = best[i] === si;
         el("circle", { cx: xs[i], cy: y(v), r: win ? 7 : 5, fill: win ? s.color : "#fff", stroke: s.color, "stroke-width": 2 }, svg);
@@ -671,12 +654,12 @@ footer.end a { color: var(--fg); }
 
   /* Figure 4: learning curves */
   var runs = [
-    { id: "Named · run 1", color: C.amber, dash: "", trained: "stable", stable: [-0.224, -0.213, 0.338], changing: [0.180, 0.112, 0.6247] },
-    { id: "Named · run 2", color: C.amber, dash: "6 4", trained: "stable", stable: [-0.224, -0.055, 0.233], changing: [0.180, 0.117, 0.187] },
-    { id: "Masked · run 1", color: C.violet, dash: "", trained: "stable", stable: [-0.212, 0.333, 0.917], changing: [0.356, 0.678, 0.941] },
-    { id: "Masked · run 2", color: C.violet, dash: "6 4", trained: "stable", stable: [0.048, 0.898, 0.902], changing: [0.155, 0.902, 0.954] },
-    { id: "Named · changing-world run", color: C.grey, dash: "", trained: "changing", stable: [-0.224, -0.232, -0.200], changing: [0.180, 0.348, 0.322] },
-    { id: "Masked · changing-world run", color: C.grey, dash: "2 3", trained: "changing", stable: [-0.212, -0.220, -0.220], changing: [0.356, 0.316, 0.316] }
+    { id: "Named · run 1", color: C.amberMid, label: C.amber, dash: "", trained: "stable", stable: [-0.224, -0.213, 0.338], changing: [0.180, 0.112, 0.6247] },
+    { id: "Named · run 2", color: C.amberMid, label: C.amber, dash: "6 4", trained: "stable", stable: [-0.224, -0.055, 0.233], changing: [0.180, 0.117, 0.187] },
+    { id: "Masked · run 1", color: C.violetMid, label: C.violet, dash: "", trained: "stable", stable: [-0.212, 0.333, 0.917], changing: [0.356, 0.678, 0.941] },
+    { id: "Masked · run 2", color: C.violetMid, label: C.violet, dash: "6 4", trained: "stable", stable: [0.048, 0.898, 0.902], changing: [0.155, 0.902, 0.954] },
+    { id: "Named · trained in changing", color: C.grey, dash: "", trained: "changing", stable: [-0.224, -0.232, -0.200], changing: [0.180, 0.348, 0.322] },
+    { id: "Masked · trained in changing", color: C.grey, dash: "2 3", trained: "changing", stable: [-0.212, -0.220, -0.220], changing: [0.356, 0.316, 0.316] }
   ];
   var world = "stable";
   function drawCurves() {
@@ -705,9 +688,9 @@ footer.end a { color: var(--fg); }
       var colorful = r.trained === "stable";
       var stroke = r.color, op = (world === "stable" && !colorful) ? 0.9 : 1;
       var d = v.map(function (val, i) { return (i ? "L" : "M") + x([0, 32, 64][i]) + " " + y(val); }).join(" ");
-      el("path", { d: d, fill: "none", stroke: stroke, "stroke-width": colorful ? 2.75 : 2, "stroke-dasharray": r.dash, opacity: op }, svg);
+      el("path", { d: d, fill: "none", stroke: stroke, "stroke-width": 1, "vector-effect": "non-scaling-stroke", "stroke-dasharray": r.dash, opacity: op }, svg);
       v.forEach(function (val, i) {
-        el("circle", { cx: x([0, 32, 64][i]), cy: y(val), r: 3.5, fill: "#fff", stroke: stroke, "stroke-width": 2, opacity: op }, svg);
+        el("circle", { cx: x([0, 32, 64][i]), cy: y(val), r: 3, fill: "#fff", stroke: stroke, "stroke-width": 1, "vector-effect": "non-scaling-stroke", opacity: op }, svg);
       });
       ends.push({ r: r, y: y(v[2]), v: v[2], here: trainedHere });
     });
@@ -715,7 +698,7 @@ footer.end a { color: var(--fg); }
       ends.sort(function (a, b) { return a.y - b.y; });
       for (var i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
       ends.forEach(function (e) {
-        el("text", { x: W - R + 10, y: e.y + 4, "font-size": 11, fill: e.r.color === C.grey ? C.muted : e.r.color,
+        el("text", { x: W - R + 10, y: e.y + 4, "font-size": 11, fill: e.r.label || C.muted,
           "font-weight": 500 }, svg, e.v.toFixed(2) + "  " + e.r.id);
       });
     }
@@ -735,8 +718,8 @@ footer.end a { color: var(--fg); }
     });
     document.getElementById("fig4-title").textContent = w === "stable" ? "Score in the stable world" : "Score in the changing world";
     document.getElementById("fig4-sub").textContent = w === "stable"
-      ? "The four runs that trained here. The two changing-world runs are shown in grey."
-      : "Coloured runs never trained in this world. The grey runs did.";
+      ? "Coloured: the four runs that trained in this world. Grey: the two runs that trained in the changing world."
+      : "Coloured: the four runs that trained in the stable world, scored here without training here. Grey: the two runs that trained in this world.";
     drawCurves();
   }
   document.querySelectorAll("[data-world]").forEach(function (b) {
@@ -770,8 +753,8 @@ footer.end a { color: var(--fg); }
       var xc = cx - bw * 0.75, xs = cx + bw * 0.75;
       el("rect", { x: xc - bw / 2, y: y(g.ch), width: bw, height: y(0) - y(g.ch), fill: "#fff", stroke: g.color, "stroke-width": 1.5 }, svg);
       el("rect", { x: xs - bw / 2, y: y(g.st), width: bw, height: y(0) - y(g.st), fill: g.tint, stroke: g.color, "stroke-width": 1.5 }, svg);
-      g.chRuns.forEach(function (v) { el("circle", { cx: xc, cy: y(v), r: 4, fill: g.dark }, svg); });
-      g.stRuns.forEach(function (v, i) { el("circle", { cx: xs + (i ? 9 : -9), cy: y(v), r: 4, fill: g.dark }, svg); });
+      g.chRuns.forEach(function (v) { el("circle", { cx: xc, cy: y(v), r: 4, fill: g.color }, svg); });
+      g.stRuns.forEach(function (v, i) { el("circle", { cx: xs + (i ? 9 : -9), cy: y(v), r: 4, fill: g.color }, svg); });
       el("text", { x: xc, y: y(0) + 15, "text-anchor": "middle", "font-size": 10.5 }, svg, "changing");
       el("text", { x: xs, y: y(0) + 15, "text-anchor": "middle", "font-size": 10.5 }, svg, "stable");
       el("text", { x: cx, y: H - 12, "text-anchor": "middle", "font-size": 12, "font-weight": 600, fill: g.dark }, svg, g.name);
@@ -779,8 +762,8 @@ footer.end a { color: var(--fg); }
       el("text", { x: xs, y: Math.min(y(g.st), y(Math.max.apply(null, g.stRuns))) - 8, "text-anchor": "middle", "font-size": 11 }, svg, g.st.toLocaleString("en-US"));
       // bracket for the extra cost of the stable world
       var bx = xs + bw / 2 + (small ? 6 : 14);
-      el("path", { d: "M" + bx + " " + y(g.ch) + " h6 V" + y(g.st) + " h-6", fill: "none", stroke: g.dark, "stroke-width": 1.5 }, svg);
-      el("line", { x1: xc + bw / 2, x2: bx, y1: y(g.ch), y2: y(g.ch), stroke: g.dark, "stroke-dasharray": "2 3" }, svg);
+      el("path", { d: "M" + bx + " " + y(g.ch) + " h6 V" + y(g.st) + " h-6", fill: "none", stroke: g.color, "stroke-width": 1.5 }, svg);
+      el("line", { x1: xc + bw / 2, x2: bx, y1: y(g.ch), y2: y(g.ch), stroke: g.color, "stroke-dasharray": "2 3" }, svg);
       el("text", { x: bx + 10, y: (y(g.ch) + y(g.st)) / 2 + 4, "font-size": small ? 11 : 13, "font-weight": 600, fill: g.dark }, svg, "+" + g.extra.toLocaleString("en-US"));
     });
     el("text", { x: W - R, y: 14, "text-anchor": "end", "font-size": small ? 11 : 13, "font-weight": 600 }, svg, "1,887 − 435 = +1,452");
@@ -821,7 +804,7 @@ footer.end a { color: var(--fg); }
         var base = top + ri * rowH * 2;
         if (!small) el("text", { x: labelW, y: base + rowH + 4, "text-anchor": "end", "font-size": 11.5 }, svg, r.label);
         else el("text", { x: L, y: base + 9, "font-size": 10.5, fill: C.muted }, svg, r.label);
-        [["named", C.amber, "Named"], ["masked", C.violet, "Masked"]].forEach(function (s, si) {
+        [["named", C.amberMid, "Named", C.amber], ["masked", C.violetMid, "Masked", C.violet]].forEach(function (s, si) {
           var cy = base + (si ? rowH * 1.45 : rowH * 0.62);
           var a = r[s[0]][0], b = r[s[0]][1];
           el("line", { x1: x(a), x2: x(b), y1: cy, y2: cy, stroke: s[1], "stroke-width": 3 }, svg);
@@ -829,7 +812,7 @@ footer.end a { color: var(--fg); }
           el("circle", { cx: x(b), cy: cy, r: 5.5, fill: s[1] }, svg);
           var right = Math.max(x(a), x(b));
           var fmt = p.max < 1 && p.max > 0.1 ? 2 : 3;
-          el("text", { x: right + 10, y: cy + 4, "font-size": 11, fill: s[1], "font-weight": 600 }, svg,
+          el("text", { x: right + 10, y: cy + 4, "font-size": 11, fill: s[3], "font-weight": 600 }, svg,
             a.toFixed(fmt) + " → " + b.toFixed(fmt));
         });
       });
