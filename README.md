@@ -11,7 +11,7 @@
 | **Familiar words** (Named) | `inspect: valve 2` · `last open 2 ok` | 0.34 · 0.23 | 0.62 · 0.19 |
 | **Invented words** (Masked) | `lom: unit 2` · `last kel 2 ok` | **0.92 · 0.90** | **0.94 · 0.95** |
 
-*01 / two worlds. Stable world (trained here): the active valve stays put, and a body that repeats reliably comes out ahead. Changing world (tested in stage 04): the active valve is redrawn every cycle, and a body that switches easily comes out ahead. Same pretrained model, same environment and action IDs; the interface vocabulary changes. Two short training runs per row. Score: 0 = random actions, 1 = a controller that knows the rule.*
+*01 / two worlds. Stable world (trained here): the active valve stays put, and a body that repeats reliably comes out ahead. Changing world (tested in stage 04): the active valve is redrawn every cycle, and a body that switches easily comes out ahead. Each run uses the same pretrained model, environment, and actions. Only the words used to describe the environment change. Each version was trained twice. Scores show how well the model performs. A score of 0 matches random actions, while 1 matches a controller that knows the world's rules.*
 
 What if there existed a world where a tendency often treated as unproductive in our own environment became a valuable capability? The idea came from thinking about neurodivergence and how strongly the surrounding world shapes what we recognize as ability.
 

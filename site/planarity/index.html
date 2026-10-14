@@ -345,7 +345,7 @@ footer.end a { color: var(--fg); }
         <div class="t-cell"><span class="cap">03 / score after learning · 64 episodes</span><svg class="chart" id="t-spark-masked" role="img" aria-label="Invented words: score rises to 0.92 and 0.90"></svg></div>
         <div class="t-cell"><span class="cap">04 / score in the changing world</span><div class="result" id="teaser-masked"></div></div>
       </div>
-      <div class="teaser-foot">Same pretrained model, same environment and action IDs; the interface vocabulary changes. Two short training runs per row.<br>Score: 0 = random actions · 1 = a controller that knows the rule.</div>
+      <div class="teaser-foot">Each run uses the same pretrained model, environment, and actions. Only the words used to describe the environment change. Each version was trained twice.<br>Scores show how well the model performs. A score of 0 matches random actions, while 1 matches a controller that knows the world's rules.</div>
     </div>
     <figcaption id="teaser-cap" class="tldr"><b>Tl;dr:</b> I designed a world where repeating an action is unusually valuable, then trained the same language model using two descriptions of that world. With invented labels, its final score reached 0.90–0.92; with familiar words, 0.23–0.34. The invented-label runs also scored highly under the opposite world rule. <strong>What caused the difference is still open.</strong> The next experiments ask whether the model was slowed by prior expectations, by the interface itself, or by something in how it learned.</figcaption>
   </figure>
